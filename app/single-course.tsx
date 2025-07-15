@@ -4,13 +4,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Modal,
   TextInput,
   ActivityIndicator,
   FlatList,
   TouchableWithoutFeedback,
   Platform,
 } from "react-native";
+import Modal from "react-native-modal";
 import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
@@ -267,6 +267,12 @@ export default function SingleCourse() {
     }
   }, [course]);
 
+  const generateUniqueKey = (exercise: any, index: number, day: number) => {
+  // Koristi kombinaciju exercise ID, day-a i indeksa za jedinstveni key
+  const exerciseId = exercise?.exercise?.id || exercise?.id;
+  return `${day}-${exerciseId}-${index}`;
+};
+
   const fetchCourse = async () => {
     try {
       const fetchedCourse = await getCourseById(
@@ -311,12 +317,12 @@ export default function SingleCourse() {
         .includes(searchValForDay?.toLowerCase())
     );
   const totalAvailableExercisesForDay = exercises?.filter((exercise: any) => {
-  return !totalExercisesForSelectedDay
-  // @ts-ignore
-    ?.map((e) => e?.exercise?.id)
-    ?.includes(exercise.id);
-});
-  
+    return !totalExercisesForSelectedDay
+      // @ts-ignore
+      ?.map((e) => e?.exercise?.id)
+      ?.includes(exercise.id);
+  });
+
   const filteredAvailableExercisesForDay = totalAvailableExercisesForDay
     ?.filter((exercise: any) =>
       selectedAvailableExercisesForDayTags?.length
@@ -361,38 +367,40 @@ export default function SingleCourse() {
     try {
       const safeExercisesByDay = cloneDeep(exercisesByDay);
 
-   const formattedCourseDays = Object.keys(safeExercisesByDay)
-  .filter((dayKey) => !isNaN(parseInt(dayKey, 10)))
-  .map((dayKey) => {
-    const dayNumber = parseInt(dayKey, 10);
-    const exercises = safeExercisesByDay[dayNumber] || [];
+      const formattedCourseDays = Object.keys(safeExercisesByDay)
+        .filter((dayKey) => !isNaN(parseInt(dayKey, 10)))
+        .map((dayKey) => {
+          const dayNumber = parseInt(dayKey, 10);
+          const exercises = safeExercisesByDay[dayNumber] || [];
 
-    const existingDay = course?.days?.find(
-      (day: any) => Number(day.day_number) === dayNumber
-    );
+          const existingDay = course?.days?.find(
+            (day: any) => Number(day.day_number) === dayNumber
+          );
 
-    const formattedExercises = exercises
-      .map((ex: any, index: number) => {
-        const existingExerciseEntry = existingDay?.exercises?.find(
-          (e: any) =>
-            e.exercise_id === ex?.exercise?.id ||
-            e.exercise?.id === ex?.exercise?.id
-        );
+          const formattedExercises = exercises
+            .map((ex: any, index: number) => {
+              const existingExerciseEntry = existingDay?.exercises?.find(
+                (e: any) =>
+                  e.exercise_id === ex?.exercise?.id ||
+                  e.exercise?.id === ex?.exercise?.id
+              );
 
-        return {
-          ...(existingExerciseEntry?.id && { id: existingExerciseEntry.id }),
-          exercise_id: ex?.exercise?.id,
-          order: index + 1,
-        };
-      })
-      .filter((ex) => ex.exercise_id); // Skip invalid ones
+              return {
+                ...(existingExerciseEntry?.id && {
+                  id: existingExerciseEntry.id,
+                }),
+                exercise_id: ex?.exercise?.id,
+                order: index + 1,
+              };
+            })
+            .filter((ex) => ex.exercise_id); // Skip invalid ones
 
-    return {
-      day_number: dayNumber,
-      ...(existingDay?.id && { id: existingDay.id }),
-      exercises: formattedExercises,
-    };
-  });
+          return {
+            day_number: dayNumber,
+            ...(existingDay?.id && { id: existingDay.id }),
+            exercises: formattedExercises,
+          };
+        });
 
       const dataToSend = {
         title: courseTitle,
@@ -477,12 +485,16 @@ export default function SingleCourse() {
     );
   };
 
-  const removeExerciseFromDay = (exerciseId: number, day: number) => {
-    setExercisesByDay((prev) => ({
-      ...prev,
-      [day]: prev[day].filter((ex) => ex.id !== exerciseId),
-    }));
-  };
+const removeExerciseFromDay = (exerciseId: number, day: number) => {
+  setExercisesByDay((prev) => ({
+    ...prev,
+    [day]: prev[day].filter((ex) => 
+      ex.id !== exerciseId && 
+    // @ts-ignore
+      ex.exercise?.id !== exerciseId
+    ),
+  }));
+};
 
   const renderExerciseForDayItem = ({
     item,
@@ -491,14 +503,17 @@ export default function SingleCourse() {
     shorter,
     day,
   }: any) => {
+     const exercise = item?.exercise || item;
+     const exerciseName = exercise?.name;
+  const exerciseDuration = exercise?.duration_in_seconds;
     const thumbnailImage =
-      item.exercise?.images?.find((img: any) => img.id === item.exercise?.thumbnail_image)
-        ?.file_path ?? item?.images?.[0]?.file_path;
+      item.exercise?.images?.find(
+        (img: any) => img.id === item.exercise?.thumbnail_image
+      )?.file_path ?? item?.images?.[0]?.file_path;
 
-    console.log(item.exercise.images)
 
     const { hours, minutes, seconds } = convertSeconds(
-      Number(item.exercise?.duration_in_seconds)
+      Number(exerciseDuration)
     );
 
     return (
@@ -576,7 +591,7 @@ export default function SingleCourse() {
               fontFamily: "Default-Medium",
             }}
           >
-            {item?.exercise?.name ?? "unnamed"}
+            {exerciseName}
           </ThemedText>
           <View
             style={{
@@ -1341,19 +1356,19 @@ export default function SingleCourse() {
                           elevation: colorScheme === "dark" ? 2 : 1.1,
                         }}
                         onPress={() => {
-                            setExercisesByDay((prevState: any) => {
-    const existing = prevState[selectedDay] || [];
-    return {
-      ...prevState,
-      [selectedDay]: [...existing, { exercise }], // correct wrapping
-    };
-  });
+                          setExercisesByDay((prevState: any) => {
+                            const existing = prevState[selectedDay] || [];
+                            return {
+                              ...prevState,
+                              [selectedDay]: [...existing, { exercise }], // correct wrapping
+                            };
+                          });
 
-  if (emptyDays?.includes(String(selectedDay))) {
-    setEmptyDays((prevState: any) =>
-      prevState.filter((d: any) => d != selectedDay)
-    );
-  }
+                          if (emptyDays?.includes(String(selectedDay))) {
+                            setEmptyDays((prevState: any) =>
+                              prevState.filter((d: any) => d != selectedDay)
+                            );
+                          }
                         }}
                       >
                         <View
@@ -1553,189 +1568,79 @@ export default function SingleCourse() {
     );
   };
 
-  const renderCoursesSummary = () => {
-    return (
-      <View
-        style={{
-          width: "100%",
-        }}
-      >
-        {Object.entries(exercisesByDay)?.map(([day, exercises]) => {
-          const totalDurationInSeconds = exercises
+const renderCoursesSummary = () => {
+  return (
+    <ScrollView style={{ paddingHorizontal: 10, paddingTop: 20, width: "100%" }}>
+      {Object.entries(exercisesByDay).map(([day, exercises]) => {
+        const { hours, minutes, seconds } = convertSeconds(
+          exercises
             // @ts-ignore
-            ?.map((e) => e.exercise?.duration_in_seconds)
-            .reduce((acc, num) => acc + num, 0);
+            ?.map((e) => e?.exercise?.duration_in_seconds || e?.duration_in_seconds || 0)
+            .reduce((acc, num) => acc + num, 0)
+        );
 
-          const { hours, minutes, seconds } = convertSeconds(
-            Number(totalDurationInSeconds)
-          );
-          return (
-            exercises &&
-            exercises.length > 0 && (
-              <View key={day}>
-                <View
+        return (
+          exercises &&
+          exercises.length > 0 && (
+            <View key={`day-${day}`}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "flex-end",
+                  marginBottom: 3,
+                }}
+              >
+                <ThemedText
+                  type="subtitle"
                   style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "flex-end",
-                    marginBottom: 3,
+                    fontSize: 14,
+                    marginTop: 20,
                   }}
                 >
-                  <ThemedText
-                    type="subtitle"
-                    style={{
-                      // marginBottom: 3,
-                      fontSize: 14,
-                      marginTop: 20,
-                    }}
-                  >
-                    Day {day} Exercises
-                  </ThemedText>
-                  <ThemedText
-                    type="smallest"
-                    style={{
-                      paddingTop: 20,
-                      paddingRight: 10,
-                      paddingBottom: 5,
-                      textAlign: "right",
-                    }}
-                  >
-                    Total Duration: {hours > 0 ? ` ${hours}h` : ""}
-                    {minutes > 0 ? ` ${minutes}min` : ""}
-                    {seconds > 0 ? ` ${seconds}sec` : ""}
-                  </ThemedText>
-                </View>
-                <DraggableFlatList
-                  dragHitSlop={{ top: -10, left: -10 }}
-                  key={`${filters.visible}-${summaryVisible}`}
-                  data={exercises}
-                  renderItem={(obj) => {
-                    return renderExerciseForDayItem({
-                      ...obj,
-                      shorter: true,
-                      day,
-                    });
+                  Day {day} Exercises
+                </ThemedText>
+                <ThemedText
+                  type="smallest"
+                  style={{
+                    paddingTop: 20,
+                    paddingRight: 10,
+                    paddingBottom: 5,
+                    textAlign: "right",
                   }}
-                  keyExtractor={(item) => item.id?.toString()}
-                  dragItemOverflow={true}
-                  onDragEnd={({ data }) => {
-                    setExercisesByDay((prevExercises) => {
-                      const fullList = prevExercises[Number(day)] || [];
-
-                      const newOrderMap = new Map(
-                        data?.map((exercise, index) => [exercise.id, index])
-                      );
-
-                      const newFullList = [...fullList].sort((a, b) => {
-                        const indexA =
-                          newOrderMap.get(a.id) ?? fullList.indexOf(a);
-                        const indexB =
-                          newOrderMap.get(b.id) ?? fullList.indexOf(b);
-                        return indexA - indexB;
-                      });
-
-                      return {
-                        ...prevExercises,
-                        [day]: newFullList,
-                      };
-                    });
-                  }}
-                />
-                {/* {exercises.map((exercise: Exercise, index: number) => {
-                  const thumbnailImage = exercise.images?.find(
-                    (img: any) => img.id === exercise.thumbnail_image
-                  )?.file_path;
-                  return (
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      key={exercise.id}
-                      style={{
-                        ...styles.workoutWrapper,
-                        paddingRight: 30,
-                      }}
-                    >
-                      <TouchableOpacity
-                        style={styles.removeButton}
-                        onPress={() => removeExerciseFromDay(exercise.id)}
-                      >
-                        <Ionicons
-                          name="close-circle"
-                          size={20}
-                          color="#f84c4cd2"
-                        />
-                      </TouchableOpacity>
-                      <View
-                        style={{
-                          position: "absolute",
-                          top: "50%",
-                          right: -15,
-                          transform: "translate(0, -50%)",
-                          padding: 20,
-                        }}
-                      >
-                        <Ionicons
-                          name="reorder-four-outline"
-                          size={24}
-                          color="#555"
-                        />
-                      </View>
-                      <View style={styles.workoutImageWrapper}>
-                        <Image
-                          source={
-                            thumbnailImage
-                              ? { uri: thumbnailImage }
-                              : require("@/assets/images/splash-logo.png")
-                          }
-                          style={styles.workoutImage}
-                        />
-                      </View>
-                      <View style={styles.workoutInfo}>
-                        <ThemedText
-                          type="smaller"
-                          style={{
-                            color: "#000",
-                            fontFamily: "Default-Medium",
-                          }}
-                        >
-                          {exercise.name}
-                        </ThemedText>
-                        <View
-                          style={{
-                            marginTop: 6,
-                            flexDirection: "row",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Ionicons
-                            name="time-outline"
-                            size={18}
-                            color="rgba(22, 22, 22, 1)"
-                          />
-                          <ThemedText
-                            type="smaller"
-                            style={{
-                              marginLeft: 3,
-                              color: "#000",
-                              fontSize: 12,
-                              lineHeight: 15,
-                              paddingTop: 3,
-                            }}
-                          >
-                            {exercise.duration_in_seconds} min
-                          </ThemedText>
-                        </View>
-         
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })} */}
+                >
+                  Total Duration: {hours > 0 ? ` ${hours}h` : ""}
+                  {minutes > 0 ? ` ${minutes}min` : ""}
+                  {seconds > 0 ? ` ${seconds}sec` : ""}
+                </ThemedText>
               </View>
-            )
-          );
-        })}
-      </View>
-    );
-  };
+              <DraggableFlatList
+                dragHitSlop={{ top: -10, left: -10 }}
+                key={`day-${day}-${filters.visible}-${summaryVisible}-${exercises.length}`}
+                data={exercises}
+                renderItem={(obj) => {
+                  return renderExerciseForDayItem({
+                    ...obj,
+                    shorter: true,
+                    day: Number(day),
+                  });
+                }}
+                keyExtractor={(item, index) => generateUniqueKey(item, index, Number(day))}
+                dragItemOverflow={true}
+                onDragEnd={({ data }) => {
+                  setExercisesByDay((prevExercises) => ({
+                    ...prevExercises,
+                    [Number(day)]: data,
+                  }));
+                }}
+              />
+            </View>
+          )
+        );
+      })}
+    </ScrollView>
+  );
+};
 
   const renderEditCourseForm = (finalFormVisible?: boolean) => {
     return (
@@ -1852,10 +1757,16 @@ export default function SingleCourse() {
               </TouchableWithoutFeedback>
 
               <Modal
-                visible={iosDifficultyPickerVisible}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setIosDifficultyPickerVisible(false)}
+                isVisible={iosDifficultyPickerVisible}
+                onBackdropPress={() => setIosDifficultyPickerVisible(false)}
+                onBackButtonPress={() => setIosDifficultyPickerVisible(false)}
+                animationIn="slideInUp"
+                animationOut="slideOutDown"
+                useNativeDriver
+                hideModalContentWhileAnimating
+                backdropOpacity={0.5}
+                statusBarTranslucent
+                style={{ margin: 0 }}
               >
                 <View style={{ flex: 1, justifyContent: "flex-end" }}>
                   {/* Backdrop that closes on tap outside */}
@@ -2403,12 +2314,16 @@ export default function SingleCourse() {
         })}
       </View>
       <Modal
-        visible={editFormVisible}
-        animationType="slide"
-        onRequestClose={() => {
-          setEditFormVisible(false);
-        }}
+        isVisible={editFormVisible}
+        onBackdropPress={() => setEditFormVisible(false)}
+        onBackButtonPress={() => setEditFormVisible(false)}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        useNativeDriver
+        hideModalContentWhileAnimating
+        backdropOpacity={0.5}
         statusBarTranslucent
+        style={{ margin: 0 }}
       >
         <View style={{ flex: 1, backgroundColor: mainColor }}>
           {selectedGroup && !exercisesLoading && (
@@ -2508,11 +2423,20 @@ export default function SingleCourse() {
           )}
         </View>
         <Modal
-          transparent
-          visible={filters.visible}
-          onRequestClose={() =>
+          isVisible={filters.visible}
+          onBackdropPress={() =>
             setFilters((prevState) => ({ ...prevState, visible: false }))
           }
+          onBackButtonPress={() =>
+            setFilters((prevState) => ({ ...prevState, visible: false }))
+          }
+          animationIn="slideInUp"
+          animationOut="slideOutDown"
+          useNativeDriver
+          hideModalContentWhileAnimating
+          backdropOpacity={0.5}
+          statusBarTranslucent
+          style={{ margin: 0 }}
         >
           {filters.visible && (
             <TouchableWithoutFeedback
@@ -2638,10 +2562,16 @@ export default function SingleCourse() {
           </View>
         </Modal>
         <Modal
-          transparent
-          visible={summaryVisible}
-          onRequestClose={() => setSummaryVisible(false)}
+          isVisible={summaryVisible}
+          onBackdropPress={() => setSummaryVisible(false)}
+          onBackButtonPress={() => setSummaryVisible(false)}
+          animationIn="slideInUp"
+          animationOut="slideOutDown"
+          useNativeDriver
+          hideModalContentWhileAnimating
+          backdropOpacity={0.5}
           statusBarTranslucent
+          style={{ margin: 0 }}
         >
           <View style={{ flex: 1, backgroundColor: mainColor, width: "100%" }}>
             {filters.visible && (

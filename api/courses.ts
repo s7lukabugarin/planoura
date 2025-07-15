@@ -1,3 +1,4 @@
+import Toast from "react-native-toast-message";
 import { getTokens, refreshTokens } from "./auth";
 import axios from "axios";
 
@@ -90,6 +91,16 @@ export async function createCourseSessions(
         status: error.response.status,
         data: error.response.data,
       });
+
+      if (error.response.data && error.response.data?.[0]?.non_field_errors?.[0]) {
+        console.log("123");
+            Toast.show({
+              type: 'error',
+              text1: 'Failed to create workout for course',
+              text2: error.response.data?.[0]?.non_field_errors?.[0],
+              position: 'top',
+            });
+      }
 
       if (error.response.status === 401) {
         const refreshVal = await refreshTokens();

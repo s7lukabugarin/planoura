@@ -568,118 +568,121 @@ export default function CalendarScreen() {
     }
   );
 
-  const submitCourse = async () => {
-    // First check if a course is selected
-    if (!selectedWorkoutCourse) {
-      Alert.alert(
-        "No Class Selected",
-        "Please select a class before submitting."
-      );
-      return;
-    }
-
-    const now = new Date();
-    let hasInvalidTime = false;
-
-    // Validate all sessions
-    const validationResults = await Promise.all(
-      Object.entries(selectedCourseDates).map(async ([date, time], index) => {
-        if (!time) {
-          hasInvalidTime = true;
-          Alert.alert(
-            "Missing Time",
-            `Please select a time for ${moment(date).format("DD.MM.YYYY.")}`
-          );
-          return { date, time, isValid: false };
-        }
-
-        const startDateTime = moment(`${date} ${time}`, "YYYY-MM-DD HH:mm");
-        const isToday = startDateTime.isSame(now, "day");
-        const isPastTime = startDateTime.isBefore(now);
-
-        if (isToday && isPastTime) {
-          hasInvalidTime = true;
-          Alert.alert(
-            "Invalid Time",
-            `You can't schedule session for ${moment(date).format(
-              "DD.MM.YYYY."
-            )} at past time ${time}.`
-          );
-        }
-        return { date, time, isValid: !(isToday && isPastTime) };
-      })
+const submitCourse = async () => {
+  // First check if a course is selected
+  if (!selectedWorkoutCourse) {
+    Alert.alert(
+      "No Class Selected",
+      "Please select a class before submitting."
     );
+    return;
+  }
 
-    // If any validation failed, abort submission
-    if (hasInvalidTime || !selectedWorkoutCourse) {
-      return;
-    }
+  const now = new Date();
+  let hasInvalidTime = false;
 
-    // Proceed with creating valid sessions
-    const formattedSessions = await Promise.all(
-      Object.entries(selectedCourseDates).map(async ([date, time], index) => {
-        const courseDay = selectedCourse.days[index];
-        if (!courseDay) return null;
-
-        const courseDayId = courseDay.id;
-        const startDateTime = moment(`${date} ${time}`, "YYYY-MM-DD HH:mm");
-
-        const totalDuration = courseDay.exercises.reduce(
-          (acc: number, ex: any) =>
-            acc + (ex.exercise?.duration_in_seconds || 0),
-          0
+  // Validate all sessions
+  const validationResults = await Promise.all(
+    Object.entries(selectedCourseDates).map(async ([date, time], index) => {
+      if (!time) {
+        hasInvalidTime = true;
+        Alert.alert(
+          "Missing Time",
+          `Please select a time for ${moment(date).format("DD.MM.YYYY.")}`
         );
-        const endDateTime = startDateTime.clone().add(totalDuration, "seconds");
-
-        const alertTime = startDateTime.clone().subtract(30, "minutes");
-
-        const notificationId = await scheduleNotification(
-          alertTime.toDate(),
-          "Upcoming Class Reminder",
-          `Your class "${workoutTitle}" starts at ${startDateTime.format(
-            "HH:mm"
-          )}.`
-        );
-
-        return {
-          session_title: workoutTitle,
-          session_description: description,
-          notification_id: notificationId,
-          start: startDateTime.toISOString(),
-          end: endDateTime.toISOString(),
-          course_day_id: courseDayId,
-          members: workoutClients,
-          location_name: location,
-          longitude: null,
-          latitude: null,
-        };
-      })
-    );
-
-    try {
-      const createdCourse = await createCourseSessions(
-        // @ts-ignore
-        formattedSessions.filter(Boolean),
-        setCourseSessionsCreateLoading
-      );
-
-      if (createdCourse) {
-        handleCloseOverlays();
-        fetchClassSessions();
-        Toast.show({
-          type: "success",
-          text1: "Course sessions created successfully",
-          position: "top",
-        });
+        return { date, time, isValid: false };
       }
-    } catch (error) {
-      console.log("error", error);
-      Alert.alert(
-        "Error",
-        "Failed to create course sessions. Please try again."
+
+      const startDateTime = moment(`${date} ${time}`, "YYYY-MM-DD HH:mm");
+      const isToday = startDateTime.isSame(now, "day");
+      const isPastTime = startDateTime.isBefore(now);
+
+      if (isToday && isPastTime) {
+        hasInvalidTime = true;
+        Alert.alert(
+          "Invalid Time",
+          `You can't schedule session for ${moment(date).format(
+            "DD.MM.YYYY."
+          )} at past time ${time}.`
+        );
+      }
+      return { date, time, isValid: !(isToday && isPastTime) };
+    })
+  );
+
+  // If any validation failed, abort submission
+  if (hasInvalidTime || !selectedWorkoutCourse) {
+    return;
+  }
+
+  // Proceed with creating valid sessions
+  const formattedSessions = await Promise.all(
+    Object.entries(selectedCourseDates).map(async ([date, time], index) => {
+      const courseDay = selectedCourse.days[index];
+      if (!courseDay) return null;
+
+      const courseDayId = courseDay.id;
+      const startDateTime = moment(`${date} ${time}`, "YYYY-MM-DD HH:mm");
+
+      const totalDuration = courseDay.exercises.reduce(
+        (acc: number, ex: any) =>
+          acc + (ex.exercise?.duration_in_seconds || 0),
+        0
       );
+      const endDateTime = startDateTime.clone().add(totalDuration, "seconds");
+
+      const alertTime = startDateTime.clone().subtract(30, "minutes");
+
+      const notificationId = await scheduleNotification(
+        alertTime.toDate(),
+        "Upcoming Class Reminder",
+        `Your class "${workoutTitle}" starts at ${startDateTime.format(
+          "HH:mm"
+        )}.`
+      );
+
+      // ISPRAVKA: Koristi moment().format() umesto .toISOString() da sačuvaš lokalnu vremensku zonu
+      return {
+        session_title: workoutTitle,
+        session_description: description,
+        notification_id: notificationId,
+        start: startDateTime.format("YYYY-MM-DDTHH:mm:ss"), // Lokalno vreme bez timezone konverzije
+        end: endDateTime.format("YYYY-MM-DDTHH:mm:ss"),     // Lokalno vreme bez timezone konverzije
+        course_day_id: courseDayId,
+        members: workoutClients,
+        location_name: location,
+        longitude: null,
+        latitude: null,
+      };
+    })
+  );
+
+  console.log(formattedSessions);
+
+  try {
+    const createdCourse = await createCourseSessions(
+      // @ts-ignore
+      formattedSessions.filter(Boolean),
+      setCourseSessionsCreateLoading
+    );
+
+    if (createdCourse) {
+      handleCloseOverlays();
+      fetchClassSessions();
+      Toast.show({
+        type: "success",
+        text1: "Course sessions created successfully",
+        position: "top",
+      });
     }
-  };
+  } catch (error) {
+    console.log("error", error);
+    Alert.alert(
+      "Error",
+      "Failed to create course sessions. Please try again."
+    );
+  }
+};
 
   const durationReturnVal =
     workouts &&
@@ -825,6 +828,10 @@ export default function CalendarScreen() {
                       <TouchableWithoutFeedback
                         onPress={() => {
                           setTempSelectedCourse(selectedWorkoutCourse); // Initialize with current value
+
+                          setTempSelectedCourse(
+                            selectedWorkoutCourse || courses[0]?.id
+                          );
                           setIosPickerVisible(true);
                         }}
                       >
@@ -2988,7 +2995,7 @@ export default function CalendarScreen() {
             <TouchableOpacity
               onPress={() => {
                 handleCloseOverlays();
-          setWorkouts([]);
+                setWorkouts([]);
               }}
             >
               <Ionicons name="close-outline" size={28} color={mainTextColor} />
@@ -3032,6 +3039,7 @@ export default function CalendarScreen() {
                 />
               </TouchableOpacity>
             )}
+            
           </View>
           <View style={styles.overlayContent}>
             <FlatList
@@ -3176,6 +3184,7 @@ export default function CalendarScreen() {
             }}
           />
         </View>
+        <Toast />
       </Modal>
       <WorkoutDisplayModal
         isVisible={workoutsModalEditVisible}

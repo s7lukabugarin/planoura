@@ -121,15 +121,18 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
       setUpdateClassLoading(true);
       try {
         const dataToSend = {
-            session_title: workoutTitle,
-            session_description: workoutDescription,
-             member_ids:
+          session_title: workoutTitle,
+          session_description: workoutDescription,
+          member_ids:
             workoutClients && workoutClients.length > 0
               ? workoutClients.map((clientId) => Number(clientId))
               : [],
-        }
+        };
 
-        const updatedCourse = await updateCourseSession(fetchedClass.id, dataToSend);
+        const updatedCourse = await updateCourseSession(
+          fetchedClass.id,
+          dataToSend
+        );
 
         if (updatedCourse) {
           Toast.show({
@@ -185,7 +188,7 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
     setWorkoutClients(fetchedClass?.members?.map((m: any) => String(m.id)));
   }, [fetchedClass]);
 
-    const toggleClientSelectionForm = (clientId: string) => {
+  const toggleClientSelectionForm = (clientId: string) => {
     setWorkoutClients((prev) =>
       prev.includes(clientId)
         ? prev.filter((id) => id !== clientId)
@@ -195,18 +198,18 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
 
   const filteredSelectedExercises = selectedExercises
     ?.filter((exercise: any) => {
-        return selectedSelectedExercisesTags?.length
+      return selectedSelectedExercisesTags?.length
         ? exercise.exercise?.exercise_tags?.some((tag: any) =>
             selectedSelectedExercisesTags
               ?.map((t: any) => t.name)
               .includes(tag.name)
           )
-        : true
-    }
-      
-    )
+        : true;
+    })
     ?.filter((exercise: any) =>
-      exercise?.exercise?.name?.toLowerCase().includes(searchValSelected?.toLowerCase())
+      exercise?.exercise?.name
+        ?.toLowerCase()
+        .includes(searchValSelected?.toLowerCase())
     );
 
   const handleTagSelection = (tag: any) => {
@@ -233,8 +236,9 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
     shorter,
     day,
   }: any) => {
+    console.log(item);
     const thumbnailImage =
-      item.exercise?.images?.find((img: any) => img.id === item.thumbnail_image)
+      item.exercise?.images?.find((img: any) => img.id === item.exercise?.thumbnail_image)
         ?.file_path ?? item?.images?.[0]?.file_path;
 
     return (
@@ -294,42 +298,48 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
                 lineHeight: 15,
               }}
             >
-              {convertSeconds(Number(item.exercise?.duration_in_seconds)).minutes > 0
+              {convertSeconds(Number(item.exercise?.duration_in_seconds))
+                .minutes > 0
                 ? ` ${
-                    convertSeconds(Number(item.exercise?.duration_in_seconds)).minutes
+                    convertSeconds(Number(item.exercise?.duration_in_seconds))
+                      .minutes
                   } min`
                 : ""}
-              {convertSeconds(Number(item.exercise?.duration_in_seconds)).seconds > 0
+              {convertSeconds(Number(item.exercise?.duration_in_seconds))
+                .seconds > 0
                 ? ` ${
-                    convertSeconds(Number(item.exercise?.duration_in_seconds)).seconds
+                    convertSeconds(Number(item.exercise?.duration_in_seconds))
+                      .seconds
                   } sec`
                 : ""}
             </ThemedText>
           </View>
           {!shorter && (
             <View style={styles.tagsContainer}>
-              {item?.exercise?.exercise_tags?.map((tag: any, tagIndex: number) => {
-                return (
-                  <View
-                    key={tagIndex}
-                    style={{
-                      ...styles.tag,
-                      backgroundColor:
-                        colorScheme === "dark" ? "#15413c" : "#00ffe119",
-                    }}
-                  >
-                    <ThemedText
-                      type="smaller"
+              {item?.exercise?.exercise_tags?.map(
+                (tag: any, tagIndex: number) => {
+                  return (
+                    <View
+                      key={tagIndex}
                       style={{
-                        ...styles.tagText,
-                        color: colorScheme === "dark" ? "#e3e3e3" : "#000000",
+                        ...styles.tag,
+                        backgroundColor:
+                          colorScheme === "dark" ? "#15413c" : "#00ffe119",
                       }}
                     >
-                      {tag.name}
-                    </ThemedText>
-                  </View>
-                );
-              })}
+                      <ThemedText
+                        type="smaller"
+                        style={{
+                          ...styles.tagText,
+                          color: colorScheme === "dark" ? "#e3e3e3" : "#000000",
+                        }}
+                      >
+                        {tag.name}
+                      </ThemedText>
+                    </View>
+                  );
+                }
+              )}
             </View>
           )}
         </View>
@@ -414,94 +424,93 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
             }}
           />
         </View>
-                {clients && clients.length > 0 && (
-                  <View
-                    style={{
-                      marginTop: 25,
-                      marginRight: "auto",
-                    }}
+        {clients && clients.length > 0 && (
+          <View
+            style={{
+              marginTop: 25,
+              marginRight: "auto",
+            }}
+          >
+            <ThemedText
+              type="subtitle"
+              style={{
+                marginBottom: 8,
+                fontSize: 14,
+              }}
+            >
+              Clients
+            </ThemedText>
+            <View
+              style={{
+                flexDirection: "row",
+                rowGap: 20,
+                marginBottom: 20,
+                flexWrap: "wrap",
+                alignItems: "flex-start",
+              }}
+            >
+              {clients?.map((client: any) => {
+                return (
+                  <TouchableOpacity
+                    key={client.id}
+                    activeOpacity={0.7}
+                    style={{ flexDirection: "row", gap: 4, width: "50%" }}
+                    onPress={() => toggleClientSelectionForm(String(client.id))}
                   >
-                    <ThemedText
-                      type="subtitle"
-                      style={{
-                        marginBottom: 8,
-                        fontSize: 14,
-                      }}
-                    >
-                      Clients
-                    </ThemedText>
+                    <View style={styles.checkbox}>
+                      <Ionicons
+                        name={
+                          workoutClients?.includes(String(client.id))
+                            ? "checkbox"
+                            : "square-outline"
+                        }
+                        size={24}
+                        color={
+                          workoutClients?.includes(String(client.id))
+                            ? "#12a28d"
+                            : mainTextColor
+                        }
+                      />
+                    </View>
                     <View
                       style={{
                         flexDirection: "row",
-                        rowGap: 20,
-                        marginBottom: 20,
-                        flexWrap: "wrap",
-                        alignItems: "flex-start",
+                        alignItems: "center",
+                        gap: 4,
                       }}
                     >
-                      {clients?.map((client: any) => {
-        
-                        return (
-                          <TouchableOpacity
-                            key={client.id}
-                            activeOpacity={0.7}
-                            style={{ flexDirection: "row", gap: 4, width: "50%" }}
-                            onPress={() => toggleClientSelectionForm(String(client.id))}
-                          >
-                            <View style={styles.checkbox}>
-                              <Ionicons
-                                name={
-                                  workoutClients?.includes(String(client.id))
-                                    ? "checkbox"
-                                    : "square-outline"
-                                }
-                                size={24}
-                                color={
-                                  workoutClients?.includes(String(client.id))
-                                    ? "#12a28d"
-                                    : mainTextColor
-                                }
-                              />
-                            </View>
-                            <View
-                              style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                gap: 4,
-                              }}
-                            >
-                              {client.profile_image ? (
-                                <Image
-                                  style={{
-                                    width: 22,
-                                    height: 22,
-                                    borderRadius: 9999,
-                                  }}
-                                  source={
-                                    // @ts-ignore
-                                    { uri: client.profile_image?.file_path }
-                                  }
-                                />
-                              ) : (
-                                <Ionicons name="person" size={22} color="#12a28d" />
-                              )}
-                              <View style={{ flex: 1, flexWrap: "wrap" }}>
-                                <ThemedText
-                                  style={{
-                                    textTransform: "capitalize",
-                                    fontSize: 12,
-                                  }}
-                                >
-                                  {client.first_name} {client.last_name}
-                                </ThemedText>
-                              </View>
-                            </View>
-                          </TouchableOpacity>
-                        );
-                      })}
+                      {client.profile_image ? (
+                        <Image
+                          style={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: 9999,
+                          }}
+                          source={
+                            // @ts-ignore
+                            { uri: client.profile_image?.file_path }
+                          }
+                        />
+                      ) : (
+                        <Ionicons name="person" size={22} color="#12a28d" />
+                      )}
+                      <View style={{ flex: 1, flexWrap: "wrap" }}>
+                        <ThemedText
+                          style={{
+                            textTransform: "capitalize",
+                            fontSize: 12,
+                          }}
+                        >
+                          {client.first_name} {client.last_name}
+                        </ThemedText>
+                      </View>
                     </View>
-                  </View>
-                )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
         {selectedExercises && selectedExercises?.length > 0 && (
           <View>
             <View
@@ -510,7 +519,9 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
                 alignItems: "center",
               }}
             >
-              <ThemedText type="defaultSemiBold">Selected Session Exercises</ThemedText>
+              <ThemedText type="defaultSemiBold">
+                Selected Session Exercises
+              </ThemedText>
               <View style={styles.filterContainer}>
                 <TouchableOpacity
                   activeOpacity={0.7}
@@ -657,9 +668,11 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
             ) : filteredSelectedExercises &&
               filteredSelectedExercises?.length > 0 ? (
               <View
-                style={{
-                  // pointerEvents: isDragEnabled ? "auto" : "none"
-                }}
+                style={
+                  {
+                    // pointerEvents: isDragEnabled ? "auto" : "none"
+                  }
+                }
               >
                 <FlatList
                   // dragHitSlop={{ right: -(300 * 0.95 - 20) }}
@@ -765,20 +778,20 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
                 </ThemedText>
               </View>
             </View>
-                       {updateClassLoading ? (
-                          <ActivityIndicator size="small" color={"#12a28d"} />
-                        ) : (
-                          <TouchableOpacity
-                            style={styles.successIcon}
-                            onPress={() => {
-                              handleUpdateClass();
-                              // setWorkoutsModalVisible(true);
-                              //  handleSubmit();
-                            }}
-                          >
-                            <Ionicons name="checkmark" size={24} color={mainTextColor} />
-                          </TouchableOpacity>
-                        )}
+            {updateClassLoading ? (
+              <ActivityIndicator size="small" color={"#12a28d"} />
+            ) : (
+              <TouchableOpacity
+                style={styles.successIcon}
+                onPress={() => {
+                  handleUpdateClass();
+                  // setWorkoutsModalVisible(true);
+                  //  handleSubmit();
+                }}
+              >
+                <Ionicons name="checkmark" size={24} color={mainTextColor} />
+              </TouchableOpacity>
+            )}
           </View>
           {classLoading ? (
             <ActivityIndicator

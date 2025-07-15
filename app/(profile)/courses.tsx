@@ -52,6 +52,11 @@ const difficultyOptions: { label: string; value: string }[] = [
   { label: "Advanced", value: "advanced" },
 ];
 
+const visibilityOptions = [
+  { label: "Public", value: "public" },
+  { label: "Private", value: "private" },
+];
+
 export default function CoursesScreen({ navigation }: any) {
   const [iosDifficultyPickerVisible, setIosDifficultyPickerVisible] =
     useState(false);
@@ -109,6 +114,7 @@ export default function CoursesScreen({ navigation }: any) {
   const [searchValForDay, setSearchValForDay] = useState("");
   const [searchValAvailableForDay, setSearchValAvailableForDay] = useState("");
 
+  const [selectedVisibility, setSelectedVisibility] = useState<any[]>([]);
   const [selectedDifficulties, setSelectedDifficulties] = useState<
     Difficulty[]
   >([]);
@@ -132,6 +138,22 @@ export default function CoursesScreen({ navigation }: any) {
     fetchExerciseTagsPerGroup,
     exerciseTagsPerGroup,
   } = useTags();
+
+  const handleVisibilitySelection = (option: any) => {
+    const selectedValues = selectedVisibility.map((v) => v.value);
+
+    if (selectedValues.includes(option.value)) {
+      setSelectedVisibility((prevState) =>
+        prevState.filter((item) => item.value !== option.value)
+      );
+    } else {
+      setSelectedVisibility((prevState) => [...prevState, option]);
+    }
+  };
+
+  const getCourseVisibility = (course: any) => {
+    return Number(userId) === Number(course.created_by) ? "private" : "public";
+  };
 
   const fetchGroups = async () => {
     try {
@@ -1835,6 +1857,13 @@ export default function CoursesScreen({ navigation }: any) {
         : true
     )
     .filter((course) =>
+      selectedVisibility?.length
+        ? selectedVisibility
+            .map((v: any) => v.value)
+            .includes(getCourseVisibility(course))
+        : true
+    )
+    .filter((course) =>
       course.title?.toLowerCase().includes(searchValCourses?.toLowerCase())
     );
 
@@ -1972,7 +2001,8 @@ export default function CoursesScreen({ navigation }: any) {
           </TouchableOpacity>
         )}
       </View>
-      {selectedDifficulties && selectedDifficulties.length > 0 && (
+      {((selectedDifficulties && selectedDifficulties.length > 0) ||
+        (selectedVisibility && selectedVisibility.length > 0)) && (
         <View
           style={{
             ...styles.filtersContainer,
@@ -1981,35 +2011,68 @@ export default function CoursesScreen({ navigation }: any) {
             gap: 6,
           }}
         >
-          {selectedDifficulties.map((d: any) => {
-            return (
-              <TouchableOpacity
-                style={styles.filterTag}
-                key={d.id}
-                activeOpacity={0.7}
-                onPress={() => {
-                  setSelectedDifficulties((prevState) =>
-                    prevState.filter((sd: any) => sd.id !== d.id)
-                  );
-                }}
-              >
-                <ThemedText
-                  style={{
-                    ...styles.filterText,
-                    textTransform: "capitalize",
-                    fontSize: 12,
+          {selectedDifficulties &&
+            selectedDifficulties.length > 0 &&
+            selectedDifficulties.map((d: any) => {
+              return (
+                <TouchableOpacity
+                  style={styles.filterTag}
+                  key={d.id}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    setSelectedDifficulties((prevState) =>
+                      prevState.filter((sd: any) => sd.id !== d.id)
+                    );
                   }}
                 >
-                  {d.name}
-                </ThemedText>
-                <Ionicons
-                  name="close-circle"
-                  size={17}
-                  color={colorScheme === "dark" ? "#FF6B6B" : "#FA5A5A"}
-                />
-              </TouchableOpacity>
-            );
-          })}
+                  <ThemedText
+                    style={{
+                      ...styles.filterText,
+                      textTransform: "capitalize",
+                      fontSize: 12,
+                    }}
+                  >
+                    {d.name}
+                  </ThemedText>
+                  <Ionicons
+                    name="close-circle"
+                    size={17}
+                    color={colorScheme === "dark" ? "#FF6B6B" : "#FA5A5A"}
+                  />
+                </TouchableOpacity>
+              );
+            })}
+          {selectedVisibility &&
+            selectedVisibility.length > 0 &&
+            selectedVisibility.map((v: any) => {
+              return (
+                <TouchableOpacity
+                  style={styles.filterTag}
+                  key={v.value}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    setSelectedVisibility((prevState) =>
+                      prevState.filter((sv: any) => sv.value !== v.value)
+                    );
+                  }}
+                >
+                  <ThemedText
+                    style={{
+                      ...styles.filterText,
+                      textTransform: "capitalize",
+                      fontSize: 12,
+                    }}
+                  >
+                    {v.label}
+                  </ThemedText>
+                  <Ionicons
+                    name="close-circle"
+                    size={17}
+                    color={colorScheme === "dark" ? "#FF6B6B" : "#FA5A5A"}
+                  />
+                </TouchableOpacity>
+              );
+            })}
         </View>
       )}
       {filteredCourses?.length > 0 && (
@@ -2018,7 +2081,10 @@ export default function CoursesScreen({ navigation }: any) {
           style={{
             color:
               colorScheme === "dark" ? "rgb(160, 160, 160)" : "rgb(51, 51, 51)",
-            paddingTop: selectedDifficulties.length > 0 ? 10 : 20,
+            paddingTop:
+              selectedDifficulties.length > 0 || selectedVisibility.length > 0
+                ? 10
+                : 20,
             paddingRight: 10,
             paddingBottom: 5,
             textAlign: "right",
@@ -2338,215 +2404,7 @@ export default function CoursesScreen({ navigation }: any) {
             />
           )}
         </View>
-        <Modal
-          isVisible={filters.visible}
-          onBackdropPress={() =>
-            setFilters((prevState) => ({ ...prevState, visible: false }))
-          }
-          onBackButtonPress={() =>
-            setFilters((prevState) => ({ ...prevState, visible: false }))
-          }
-          animationIn="slideInUp"
-          animationOut="slideOutDown"
-          useNativeDriver
-          hideModalContentWhileAnimating
-          backdropOpacity={0.5}
-          statusBarTranslucent
-          style={{ margin: 0 }}
-        >
-          {filters.visible && (
-            <TouchableWithoutFeedback
-              onPress={() =>
-                setFilters((prevState) => ({ ...prevState, visible: false }))
-              }
-            >
-              <View
-                style={{
-                  ...styles.modalOverlay,
-                  backgroundColor: "transparent",
-                }}
-              />
-            </TouchableWithoutFeedback>
-          )}
 
-          <View style={StyleSheet.absoluteFill}>
-            <View style={styles.modalContainer}>
-              <View
-                style={{
-                  ...styles.modalContent,
-                  backgroundColor:
-                    colorScheme === "dark" ? "#212121" : mainColor,
-                }}
-              >
-                <TouchableOpacity
-                  style={{
-                    ...styles.closeButton,
-                    marginBottom: 0,
-                  }}
-                  onPress={() =>
-                    setFilters((prevState) => ({
-                      ...prevState,
-                      visible: false,
-                    }))
-                  }
-                >
-                  <Ionicons
-                    name="close-outline"
-                    size={24}
-                    color={mainTextColor}
-                  />
-                </TouchableOpacity>
-
-                <ScrollView contentContainerStyle={styles.scrollContent}>
-                  {filters.filterName === "courses" ? (
-                    <View>
-                      <ThemedText
-                        type="subtitle"
-                        style={{
-                          marginBottom: 8,
-                          fontSize: 14,
-                        }}
-                      >
-                        Difficulty
-                      </ThemedText>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          gap: 20,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        {difficulties?.map((difficulty) => (
-                          <TouchableOpacity
-                            key={difficulty.name}
-                            activeOpacity={0.7}
-                            style={{ flexDirection: "row", gap: 4 }}
-                            onPress={() => {
-                              const ids = selectedDifficulties?.map(
-                                (d) => d.id
-                              );
-
-                              if (ids?.includes(difficulty.id)) {
-                                setSelectedDifficulties((prevState) =>
-                                  prevState.filter(
-                                    (item) => item.id !== difficulty.id
-                                  )
-                                );
-                              } else {
-                                setSelectedDifficulties((prevState) => [
-                                  ...prevState,
-                                  difficulty,
-                                ]);
-                              }
-                            }}
-                          >
-                            <View style={styles.checkbox}>
-                              <Ionicons
-                                name={
-                                  selectedDifficulties
-                                    ?.map((d) => d.id)
-                                    ?.includes(difficulty.id)
-                                    ? "checkbox"
-                                    : "square-outline"
-                                }
-                                size={24}
-                                color={
-                                  selectedDifficulties
-                                    ?.map((d) => d.id)
-                                    ?.includes(difficulty.id)
-                                    ? "#12a28d"
-                                    : mainTextColor
-                                }
-                              />
-                            </View>
-                            <ThemedText
-                              style={{
-                                textTransform: "capitalize",
-                                fontSize: 12,
-                              }}
-                            >
-                              {difficulty.name}
-                            </ThemedText>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    </View>
-                  ) : (
-                    exerciseTagsPerGroup?.map(
-                      (tagGroup: any, index: number) => {
-                        const selectedTagsIds = selectedTags.map(
-                          (tag: any) => tag.id
-                        );
-
-                        return (
-                          tagGroup.exercise_tags_set?.length > 0 && (
-                            <View key={tagGroup.id}>
-                              <ThemedText
-                                type="subtitle"
-                                style={{
-                                  marginBottom: 8,
-                                  fontSize: 14,
-                                  textTransform: "capitalize",
-                                }}
-                              >
-                                {tagGroup.name}
-                              </ThemedText>
-                              <View
-                                style={{
-                                  flexDirection: "row",
-                                  columnGap: 20,
-                                  rowGap: 10,
-                                  marginBottom:
-                                    exerciseTagsPerGroup.length - 1 !== index
-                                      ? 20
-                                      : 0,
-                                  flexWrap: "wrap",
-                                }}
-                              >
-                                {tagGroup.exercise_tags_set?.map((tag: any) => (
-                                  <TouchableOpacity
-                                    key={tag.id}
-                                    activeOpacity={0.7}
-                                    style={{ flexDirection: "row", gap: 4 }}
-                                    onPress={() => handleTagSelection(tag)}
-                                  >
-                                    <View style={styles.checkbox}>
-                                      <Ionicons
-                                        name={
-                                          selectedTagsIds.includes(tag.id)
-                                            ? "checkbox"
-                                            : "square-outline"
-                                        }
-                                        size={24}
-                                        color={
-                                          selectedTagsIds.includes(tag.id)
-                                            ? "#12a28d"
-                                            : "#888"
-                                        }
-                                      />
-                                    </View>
-                                    <ThemedText
-                                      style={{
-                                        textTransform: "capitalize",
-                                        fontSize: 12,
-                                      }}
-                                    >
-                                      {tag.name}
-                                    </ThemedText>
-                                  </TouchableOpacity>
-                                ))}
-                              </View>
-                            </View>
-                          )
-                        );
-                      }
-                    )
-                  )}
-                </ScrollView>
-              </View>
-            </View>
-          </View>
-        </Modal>
         <Modal
           isVisible={summaryVisible}
           onBackdropPress={() => setSummaryVisible(false)}
@@ -2698,7 +2556,10 @@ export default function CoursesScreen({ navigation }: any) {
                   marginBottom: 0,
                 }}
                 onPress={() =>
-                  setFilters((prevState) => ({ ...prevState, visible: false }))
+                  setFilters((prevState) => ({
+                    ...prevState,
+                    visible: false,
+                  }))
                 }
               >
                 <Ionicons
@@ -2711,73 +2572,135 @@ export default function CoursesScreen({ navigation }: any) {
               <ScrollView contentContainerStyle={styles.scrollContent}>
                 {filters.filterName === "courses" ? (
                   <View>
-                    <ThemedText
-                      type="subtitle"
-                      style={{
-                        marginBottom: 8,
-                        fontSize: 14,
-                      }}
-                    >
-                      Difficulty
-                    </ThemedText>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        gap: 20,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      {difficulties?.map((difficulty) => (
-                        <TouchableOpacity
-                          key={difficulty.name}
-                          activeOpacity={0.7}
-                          style={{ flexDirection: "row", gap: 4 }}
-                          onPress={() => {
-                            const ids = selectedDifficulties?.map((d) => d.id);
-
-                            if (ids?.includes(difficulty.id)) {
-                              setSelectedDifficulties((prevState) =>
-                                prevState.filter(
-                                  (item) => item.id !== difficulty.id
-                                )
+                    {/* Difficulty Filter */}
+                    <View style={{ marginBottom: 20 }}>
+                      <ThemedText
+                        type="subtitle"
+                        style={{
+                          marginBottom: 8,
+                          fontSize: 14,
+                        }}
+                      >
+                        Difficulty
+                      </ThemedText>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          gap: 20,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {difficulties?.map((difficulty) => (
+                          <TouchableOpacity
+                            key={difficulty.name}
+                            activeOpacity={0.7}
+                            style={{ flexDirection: "row", gap: 4 }}
+                            onPress={() => {
+                              const ids = selectedDifficulties?.map(
+                                (d) => d.id
                               );
-                            } else {
-                              setSelectedDifficulties((prevState) => [
-                                ...prevState,
-                                difficulty,
-                              ]);
-                            }
-                          }}
-                        >
-                          <View style={styles.checkbox}>
-                            <Ionicons
-                              name={
-                                selectedDifficulties
-                                  ?.map((d) => d.id)
-                                  ?.includes(difficulty.id)
-                                  ? "checkbox"
-                                  : "square-outline"
+
+                              if (ids?.includes(difficulty.id)) {
+                                setSelectedDifficulties((prevState) =>
+                                  prevState.filter(
+                                    (item) => item.id !== difficulty.id
+                                  )
+                                );
+                              } else {
+                                setSelectedDifficulties((prevState) => [
+                                  ...prevState,
+                                  difficulty,
+                                ]);
                               }
-                              size={24}
-                              color={
-                                selectedDifficulties
-                                  ?.map((d) => d.id)
-                                  ?.includes(difficulty.id)
-                                  ? "#12a28d"
-                                  : mainTextColor
-                              }
-                            />
-                          </View>
-                          <ThemedText
-                            style={{
-                              textTransform: "capitalize",
-                              fontSize: 12,
                             }}
                           >
-                            {difficulty.name}
-                          </ThemedText>
-                        </TouchableOpacity>
-                      ))}
+                            <View style={styles.checkbox}>
+                              <Ionicons
+                                name={
+                                  selectedDifficulties
+                                    ?.map((d) => d.id)
+                                    ?.includes(difficulty.id)
+                                    ? "checkbox"
+                                    : "square-outline"
+                                }
+                                size={24}
+                                color={
+                                  selectedDifficulties
+                                    ?.map((d) => d.id)
+                                    ?.includes(difficulty.id)
+                                    ? "#12a28d"
+                                    : mainTextColor
+                                }
+                              />
+                            </View>
+                            <ThemedText
+                              style={{
+                                textTransform: "capitalize",
+                                fontSize: 12,
+                              }}
+                            >
+                              {difficulty.name}
+                            </ThemedText>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Visibility Filter */}
+                    <View>
+                      <ThemedText
+                        type="subtitle"
+                        style={{
+                          marginBottom: 8,
+                          fontSize: 14,
+                        }}
+                      >
+                        Visibility
+                      </ThemedText>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          gap: 20,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {visibilityOptions?.map((option) => (
+                          <TouchableOpacity
+                            key={option.value}
+                            activeOpacity={0.7}
+                            style={{ flexDirection: "row", gap: 4 }}
+                            onPress={() => handleVisibilitySelection(option)}
+                          >
+                            <View style={styles.checkbox}>
+                              <Ionicons
+                                name={
+                                  selectedVisibility
+                                    ?.map((v) => v.value)
+                                    ?.includes(option.value)
+                                    ? "checkbox"
+                                    : "square-outline"
+                                }
+                                size={24}
+                                color={
+                                  selectedVisibility
+                                    ?.map((v) => v.value)
+                                    ?.includes(option.value)
+                                    ? "#12a28d"
+                                    : mainTextColor
+                                }
+                              />
+                            </View>
+                            <ThemedText
+                              style={{
+                                textTransform: "capitalize",
+                                fontSize: 12,
+                              }}
+                            >
+                              {option.label}
+                            </ThemedText>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     </View>
                   </View>
                 ) : (
