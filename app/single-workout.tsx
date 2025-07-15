@@ -414,7 +414,7 @@ export default function SingleExercise() {
       /** 1. pošalji ORIGINALNI asset ako je backendu potreban duration/size */
       setVideoUploadLoading(true);
       try {
-        const uploaded = await uploadVideo(asset, setVideoUploadLoading);
+        const uploaded = await uploadVideo(asset);
 
         if (uploaded) {
           const hls = await waitUntilStreamReady(uploaded.item_id);
@@ -429,6 +429,8 @@ export default function SingleExercise() {
             },
           ]);
         }
+      } catch(err) {
+        console.error(err);
       } finally {
         setVideoUploadLoading(false);
       }

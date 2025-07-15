@@ -447,7 +447,7 @@ export default function ExcerciseScreen({ navigation }: any) {
       /** 1. pošalji ORIGINALNI asset ako je backendu potreban duration/size */
       setVideoUploadLoading(true);
       try {
-        const uploaded = await uploadVideo(asset, setVideoUploadLoading);
+        const uploaded = await uploadVideo(asset);
 
         if (uploaded) {
           const hls = await waitUntilStreamReady(uploaded.item_id);
@@ -462,6 +462,8 @@ export default function ExcerciseScreen({ navigation }: any) {
             },
           ]);
         }
+      } catch(err: any) {
+        console.error(err);
       } finally {
         setVideoUploadLoading(false);
       }
@@ -1201,6 +1203,7 @@ export default function ExcerciseScreen({ navigation }: any) {
               {videoUploadLoading ? (
                 <View style={{ marginTop: 20, width: "100%" }}>
                   <ActivityIndicator size="large" color={"#12a28d"} />
+                  <ThemedText>video upload can take up to 3 minutes</ThemedText>
                 </View>
               ) : (
                 selectedVideos &&

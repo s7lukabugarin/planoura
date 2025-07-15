@@ -268,10 +268,10 @@ export default function SingleCourse() {
   }, [course]);
 
   const generateUniqueKey = (exercise: any, index: number, day: number) => {
-  // Koristi kombinaciju exercise ID, day-a i indeksa za jedinstveni key
-  const exerciseId = exercise?.exercise?.id || exercise?.id;
-  return `${day}-${exerciseId}-${index}`;
-};
+    // Koristi kombinaciju exercise ID, day-a i indeksa za jedinstveni key
+    const exerciseId = exercise?.exercise?.id || exercise?.id;
+    return `${day}-${exerciseId}-${index}`;
+  };
 
   const fetchCourse = async () => {
     try {
@@ -486,39 +486,39 @@ export default function SingleCourse() {
   };
 
   const addExerciseToDay = (exercise: Exercise) => {
-  setExercisesByDay((prevExercises: any) => {
-    const currentExercises = prevExercises[selectedDay] || [];
-    // Za edit mode, potrebno je sačuvati exercise u istom formatu kao što backend vraća
-    const exerciseToAdd = course 
-      ? { exercise: exercise } // Edit mode - wrappuj u 'exercise' objekat
-      : exercise; // Create mode - koristi direktno
-    
-    return {
-      ...prevExercises,
-      [selectedDay]: [...currentExercises, exerciseToAdd],
-    };
-  });
-  
-  // Ukloni iz dostupnih vežbi
-  setExercises((prevExercises: Exercise[]) => 
-    prevExercises?.filter((e) => e.id !== exercise.id)
-  );
-};
+    setExercisesByDay((prevExercises: any) => {
+      const currentExercises = prevExercises[selectedDay] || [];
+      // Za edit mode, potrebno je sačuvati exercise u istom formatu kao što backend vraća
+      const exerciseToAdd = course
+        ? { exercise: exercise } // Edit mode - wrappuj u 'exercise' objekat
+        : exercise; // Create mode - koristi direktno
 
-const removeExerciseFromDay = (exerciseId: number, day: number) => {
-  setExercisesByDay((prev) => ({
-    ...prev,
-    [day]: prev[day].filter((ex) => {
-      // Get the exercise ID either directly or from the nested exercise object
-      const exId = ex.id;
-      // @ts-ignore
-      const nestedExId = ex.exercise?.id;
-      
-      // Only keep exercises that don't match the ID we want to remove
-      return exId !== exerciseId && nestedExId !== exerciseId;
-    }),
-  }));
-};
+      return {
+        ...prevExercises,
+        [selectedDay]: [...currentExercises, exerciseToAdd],
+      };
+    });
+
+    // Ukloni iz dostupnih vežbi
+    setExercises((prevExercises: Exercise[]) =>
+      prevExercises?.filter((e) => e.id !== exercise.id)
+    );
+  };
+
+  const removeExerciseFromDay = (exerciseId: number, day: number) => {
+    setExercisesByDay((prev) => ({
+      ...prev,
+      [day]: prev[day].filter((ex) => {
+        // Get the exercise ID either directly or from the nested exercise object
+        const exId = ex.id;
+        // @ts-ignore
+        const nestedExId = ex.exercise?.id;
+
+        // Only keep exercises that don't match the ID we want to remove
+        return exId !== exerciseId && nestedExId !== exerciseId;
+      }),
+    }));
+  };
 
   const renderExerciseForDayItem = ({
     item,
@@ -527,14 +527,13 @@ const removeExerciseFromDay = (exerciseId: number, day: number) => {
     shorter,
     day,
   }: any) => {
-     const exercise = item?.exercise || item;
-     const exerciseName = exercise?.name;
-  const exerciseDuration = exercise?.duration_in_seconds;
+    const exercise = item?.exercise || item;
+    const exerciseName = exercise?.name;
+    const exerciseDuration = exercise?.duration_in_seconds;
     const thumbnailImage =
       item.exercise?.images?.find(
         (img: any) => img.id === item.exercise?.thumbnail_image
       )?.file_path ?? item?.images?.[0]?.file_path;
-
 
     const { hours, minutes, seconds } = convertSeconds(
       Number(exerciseDuration)
@@ -569,9 +568,9 @@ const removeExerciseFromDay = (exerciseId: number, day: number) => {
           style={styles.removeButton}
           onPress={() => {
             if (day) {
-              removeExerciseFromDay(item.id, day);
+              removeExerciseFromDay(exercise?.id, day);
             } else {
-              removeExerciseFromDay(item.id, selectedDay);
+              removeExerciseFromDay(exercise?.id, selectedDay);
             }
           }}
         >
@@ -1593,79 +1592,89 @@ const removeExerciseFromDay = (exerciseId: number, day: number) => {
     );
   };
 
-const renderCoursesSummary = () => {
-  return (
-    <ScrollView style={{ paddingHorizontal: 10, paddingTop: 20, width: "100%" }}>
-      {Object.entries(exercisesByDay).map(([day, exercises]) => {
-        const { hours, minutes, seconds } = convertSeconds(
-          exercises
-            // @ts-ignore
-            ?.map((e) => e?.exercise?.duration_in_seconds || e?.duration_in_seconds || 0)
-            .reduce((acc, num) => acc + num, 0)
-        );
+  const renderCoursesSummary = () => {
+    return (
+      <ScrollView
+        style={{ paddingHorizontal: 10, paddingTop: 20, width: "100%" }}
+      >
+        {Object.entries(exercisesByDay).map(([day, exercises]) => {
+          const { hours, minutes, seconds } = convertSeconds(
+            exercises
+              // @ts-ignore
+              ?.map(
+                (e) =>
+                  // @ts-ignore
+                  e?.exercise?.duration_in_seconds ||
+                  e?.duration_in_seconds ||
+                  0
+              )
+              .reduce((acc, num) => acc + num, 0)
+          );
 
-        return (
-          exercises &&
-          exercises.length > 0 && (
-            <View key={`day-${day}`}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "flex-end",
-                  marginBottom: 3,
-                }}
-              >
-                <ThemedText
-                  type="subtitle"
+          return (
+            exercises &&
+            exercises.length > 0 && (
+              <View key={`day-${day}`}>
+                <View
                   style={{
-                    fontSize: 14,
-                    marginTop: 20,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "flex-end",
+                    marginBottom: 3,
                   }}
                 >
-                  Day {day} Exercises
-                </ThemedText>
-                <ThemedText
-                  type="smallest"
-                  style={{
-                    paddingTop: 20,
-                    paddingRight: 10,
-                    paddingBottom: 5,
-                    textAlign: "right",
+                  <ThemedText
+                    type="subtitle"
+                    style={{
+                      fontSize: 14,
+                      marginTop: 20,
+                    }}
+                  >
+                    Day {day} Exercises
+                  </ThemedText>
+                  <ThemedText
+                    type="smallest"
+                    style={{
+                      paddingTop: 20,
+                      paddingRight: 10,
+                      paddingBottom: 5,
+                      textAlign: "right",
+                    }}
+                  >
+                    Total Duration: {hours > 0 ? ` ${hours}h` : ""}
+                    {minutes > 0 ? ` ${minutes}min` : ""}
+                    {seconds > 0 ? ` ${seconds}sec` : ""}
+                  </ThemedText>
+                </View>
+                <DraggableFlatList
+                  dragHitSlop={{ top: -10, left: -10 }}
+                  key={`day-${day}-${filters.visible}-${summaryVisible}-${exercises.length}`}
+                  data={exercises}
+                  renderItem={(obj) => {
+                    return renderExerciseForDayItem({
+                      ...obj,
+                      shorter: true,
+                      day: Number(day),
+                    });
                   }}
-                >
-                  Total Duration: {hours > 0 ? ` ${hours}h` : ""}
-                  {minutes > 0 ? ` ${minutes}min` : ""}
-                  {seconds > 0 ? ` ${seconds}sec` : ""}
-                </ThemedText>
+                  keyExtractor={(item, index) =>
+                    generateUniqueKey(item, index, Number(day))
+                  }
+                  dragItemOverflow={true}
+                  onDragEnd={({ data }) => {
+                    setExercisesByDay((prevExercises) => ({
+                      ...prevExercises,
+                      [Number(day)]: data,
+                    }));
+                  }}
+                />
               </View>
-              <DraggableFlatList
-                dragHitSlop={{ top: -10, left: -10 }}
-                key={`day-${day}-${filters.visible}-${summaryVisible}-${exercises.length}`}
-                data={exercises}
-                renderItem={(obj) => {
-                  return renderExerciseForDayItem({
-                    ...obj,
-                    shorter: true,
-                    day: Number(day),
-                  });
-                }}
-                keyExtractor={(item, index) => generateUniqueKey(item, index, Number(day))}
-                dragItemOverflow={true}
-                onDragEnd={({ data }) => {
-                  setExercisesByDay((prevExercises) => ({
-                    ...prevExercises,
-                    [Number(day)]: data,
-                  }));
-                }}
-              />
-            </View>
-          )
-        );
-      })}
-    </ScrollView>
-  );
-};
+            )
+          );
+        })}
+      </ScrollView>
+    );
+  };
 
   const renderEditCourseForm = (finalFormVisible?: boolean) => {
     return (
