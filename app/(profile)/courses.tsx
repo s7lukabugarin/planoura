@@ -5,13 +5,13 @@ import {
   Platform,
   StatusBar,
   ScrollView,
-  Modal,
   TextInput,
   TouchableWithoutFeedback,
   ActivityIndicator,
   FlatList,
   Dimensions,
 } from "react-native";
+import Modal from "react-native-modal";
 import { Image } from "expo-image";
 import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
@@ -1608,7 +1608,9 @@ export default function CoursesScreen({ navigation }: any) {
             <>
               <TouchableWithoutFeedback
                 onPress={() => {
-                  setTempDifficulty(difficultyState); // Initialize with current value
+                  setTempDifficulty(
+                    difficultyState || difficultyOptions[0].value
+                  );
                   setIosDifficultyPickerVisible(true);
                 }}
               >
@@ -1640,10 +1642,16 @@ export default function CoursesScreen({ navigation }: any) {
               </TouchableWithoutFeedback>
 
               <Modal
-                visible={iosDifficultyPickerVisible}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setIosDifficultyPickerVisible(false)}
+                isVisible={iosDifficultyPickerVisible}
+                onBackdropPress={() => setIosDifficultyPickerVisible(false)}
+                onBackButtonPress={() => setIosDifficultyPickerVisible(false)}
+                animationIn="slideInUp"
+                animationOut="slideOutDown"
+                useNativeDriver
+                hideModalContentWhileAnimating
+                backdropOpacity={0.5}
+                statusBarTranslucent
+                style={{ margin: 0 }}
               >
                 <View style={{ flex: 1, justifyContent: "flex-end" }}>
                   {/* Backdrop that closes on tap outside */}
@@ -2230,12 +2238,16 @@ export default function CoursesScreen({ navigation }: any) {
         </View>
       </ScrollView>
       <Modal
-        visible={createCourseVisible}
-        animationType="slide"
-        onRequestClose={() => {
-          setCreateCourseVisible(false);
-        }}
+        isVisible={createCourseVisible}
+        onBackdropPress={() => setCreateCourseVisible(false)}
+        onBackButtonPress={() => setCreateCourseVisible(false)}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        useNativeDriver
+        hideModalContentWhileAnimating
+        backdropOpacity={0.5}
         statusBarTranslucent
+        style={{ margin: 0 }}
       >
         <View style={{ flex: 1, backgroundColor: mainColor }}>
           {selectedGroup && !exercisesLoading && (
@@ -2327,12 +2339,20 @@ export default function CoursesScreen({ navigation }: any) {
           )}
         </View>
         <Modal
-          transparent
-          visible={filters.visible}
-          onRequestClose={() => {
-            setFilters((prevState) => ({ ...prevState, visible: false }));
-          }}
+          isVisible={filters.visible}
+          onBackdropPress={() =>
+            setFilters((prevState) => ({ ...prevState, visible: false }))
+          }
+          onBackButtonPress={() =>
+            setFilters((prevState) => ({ ...prevState, visible: false }))
+          }
+          animationIn="slideInUp"
+          animationOut="slideOutDown"
+          useNativeDriver
+          hideModalContentWhileAnimating
+          backdropOpacity={0.5}
           statusBarTranslucent
+          style={{ margin: 0 }}
         >
           {filters.visible && (
             <TouchableWithoutFeedback
@@ -2528,10 +2548,16 @@ export default function CoursesScreen({ navigation }: any) {
           </View>
         </Modal>
         <Modal
-          transparent
-          visible={summaryVisible}
-          onRequestClose={() => setSummaryVisible(false)}
+          isVisible={summaryVisible}
+          onBackdropPress={() => setSummaryVisible(false)}
+          onBackButtonPress={() => setSummaryVisible(false)}
+          animationIn="slideInUp"
+          animationOut="slideOutDown"
+          useNativeDriver
+          hideModalContentWhileAnimating
+          backdropOpacity={0.5}
           statusBarTranslucent
+          style={{ margin: 0 }}
         >
           <View style={{ flex: 1, width: "100%", backgroundColor: mainColor }}>
             {filters.visible && (
@@ -2628,13 +2654,20 @@ export default function CoursesScreen({ navigation }: any) {
       )}
 
       <Modal
-        transparent
-        visible={filters.visible}
-        // animationType="slide"
-        onRequestClose={() =>
+        isVisible={filters.visible}
+        onBackdropPress={() =>
           setFilters((prevState) => ({ ...prevState, visible: false }))
         }
-        // statusBarTranslucent
+        onBackButtonPress={() =>
+          setFilters((prevState) => ({ ...prevState, visible: false }))
+        }
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        useNativeDriver
+        hideModalContentWhileAnimating
+        backdropOpacity={0.5}
+        statusBarTranslucent
+        style={{ margin: 0 }}
       >
         {filters.visible && (
           <TouchableWithoutFeedback

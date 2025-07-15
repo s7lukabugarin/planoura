@@ -2527,47 +2527,47 @@ export default function CalendarScreen() {
                 events={eventsByDate}
                 timelineProps={{
                   async onEventPress(item) {
-                          const { start } = item;
-                  const currentDate = new Date();
+                    const { start } = item;
+                    const currentDate = new Date();
 
-                  if (currentDate > new Date(start)) {
-                    setWorkoutsModalEditVisible(true);
-                  } else {
+                    if (currentDate > new Date(start)) {
+                      setWorkoutsModalEditVisible(true);
+                    } else {
+                      // @ts-ignore
+                      if (item.isCourse) {
+                        setEditCourseFormVisible(true);
+                      } else {
+                        setEditFormVisible(true);
+                      }
+                    }
                     // @ts-ignore
                     if (item.isCourse) {
-                      setEditCourseFormVisible(true);
+                      try {
+                        const data = await getCourseSessionDetails(
+                          Number(item.id),
+                          setFetchedCourseLoading
+                        );
+
+                        setFetchedCourse(data);
+                      } catch (error) {
+                        console.log(error);
+                      }
                     } else {
-                      setEditFormVisible(true);
-                    }
-                  }
-                    // @ts-ignore
-                  if (item.isCourse) {
-                    try {
-                      const data = await getCourseSessionDetails(
-                        Number(item.id),
-                        setFetchedCourseLoading
-                      );
+                      try {
+                        setFetchedClassLoading(true);
 
-                      setFetchedCourse(data);
-                    } catch (error) {
-                      console.log(error);
-                    }
-                  } else {
-                    try {
-                      setFetchedClassLoading(true);
+                        const data = await getClassById(Number(item.id));
 
-                      const data = await getClassById(Number(item.id));
-
-                      setWorkoutTitle(data?.name);
-                      setDescription(data?.description);
-                      // setStartTime(new Date(data.start));
-                      setFetchedClass(data);
-                    } catch (error) {
-                      console.log(error);
-                    } finally {
-                      setFetchedClassLoading(false);
+                        setWorkoutTitle(data?.name);
+                        setDescription(data?.description);
+                        // setStartTime(new Date(data.start));
+                        setFetchedClass(data);
+                      } catch (error) {
+                        console.log(error);
+                      } finally {
+                        setFetchedClassLoading(false);
+                      }
                     }
-                  }
                   },
                   theme: {
                     ...calendarTheme,
@@ -2961,8 +2961,14 @@ export default function CalendarScreen() {
       </Modal>
       <Modal
         isVisible={firstFormVisible}
-        onBackdropPress={handleCloseOverlays}
-        onBackButtonPress={handleCloseOverlays}
+        onBackdropPress={() => {
+          handleCloseOverlays();
+          setWorkouts([]);
+        }}
+        onBackButtonPress={() => {
+          handleCloseOverlays();
+          setWorkouts([]);
+        }}
         animationIn="slideInUp"
         animationOut="slideOutDown"
         useNativeDriver
@@ -2981,7 +2987,8 @@ export default function CalendarScreen() {
           >
             <TouchableOpacity
               onPress={() => {
-                setFirstFormVisible(false);
+                handleCloseOverlays();
+          setWorkouts([]);
               }}
             >
               <Ionicons name="close-outline" size={28} color={mainTextColor} />
@@ -3047,8 +3054,10 @@ export default function CalendarScreen() {
               isVisible={workoutsModalVisible}
               selectedDate={selectedDate ?? ""}
               summaryVisible={finalFormVisible}
-              onClose={() => {
+              onClose={(workouts) => {
                 setWorkoutsModalVisible(false);
+                // @ts-ignore
+                setWorkouts(workouts);
               }}
               onSubmit={(workouts) => {
                 // setWorkoutsModalVisible(false);
@@ -3056,6 +3065,7 @@ export default function CalendarScreen() {
                 // @ts-ignore
                 setWorkouts(workouts);
               }}
+              workouts={workouts}
             >
               {finalFormVisible && (
                 <Modal

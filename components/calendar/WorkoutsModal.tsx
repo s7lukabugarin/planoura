@@ -37,9 +37,10 @@ interface WorkoutsModalProps {
   isVisible: boolean;
   selectedDate: string;
   summaryVisible: boolean;
-  onClose: () => void;
+  onClose: (selectedWorkouts: string[]) => void;
   onSubmit: (selectedWorkouts: string[]) => void;
   children?: React.ReactNode;
+  workouts?: any;
 }
 
 const WorkoutsModal: React.FC<WorkoutsModalProps> = ({
@@ -49,6 +50,7 @@ const WorkoutsModal: React.FC<WorkoutsModalProps> = ({
   onSubmit,
   summaryVisible,
   children,
+  workouts
 }) => {
   const [groups, setGroups] = useState<ExerciseGroup[] | null>(null);
   const [groupsLoading, setGroupsLoading] = useState(false);
@@ -115,7 +117,10 @@ const WorkoutsModal: React.FC<WorkoutsModalProps> = ({
     useCallback(() => {
       fetchGroups();
       fetchExerciseTagsPerGroup();
-    }, [])
+      if (workouts && workouts.length > 0) {
+        setSelectedExercises(workouts)
+      }
+    }, [workouts])
   );
 
   useFocusEffect(
@@ -1160,8 +1165,12 @@ const WorkoutsModal: React.FC<WorkoutsModalProps> = ({
   return (
     <Modal
       isVisible={isVisible}
-      onBackdropPress={onClose}
-      onBackButtonPress={onClose}
+      onBackdropPress={() => {
+        onClose(selectedExercises)
+      }}
+      onBackButtonPress={() => {
+        onClose(selectedExercises)
+      }}
       animationIn="slideInUp"
       animationOut="slideOutDown"
       useNativeDriver
@@ -1213,7 +1222,7 @@ const WorkoutsModal: React.FC<WorkoutsModalProps> = ({
         >
           <TouchableOpacity
             onPress={(e) => {
-              onClose();
+              onClose(selectedExercises);
               setSelectedExercises([]);
               setSelectedGroup(null);
             }}
