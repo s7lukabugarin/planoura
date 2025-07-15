@@ -485,14 +485,38 @@ export default function SingleCourse() {
     );
   };
 
+  const addExerciseToDay = (exercise: Exercise) => {
+  setExercisesByDay((prevExercises: any) => {
+    const currentExercises = prevExercises[selectedDay] || [];
+    // Za edit mode, potrebno je sačuvati exercise u istom formatu kao što backend vraća
+    const exerciseToAdd = course 
+      ? { exercise: exercise } // Edit mode - wrappuj u 'exercise' objekat
+      : exercise; // Create mode - koristi direktno
+    
+    return {
+      ...prevExercises,
+      [selectedDay]: [...currentExercises, exerciseToAdd],
+    };
+  });
+  
+  // Ukloni iz dostupnih vežbi
+  setExercises((prevExercises: Exercise[]) => 
+    prevExercises?.filter((e) => e.id !== exercise.id)
+  );
+};
+
 const removeExerciseFromDay = (exerciseId: number, day: number) => {
   setExercisesByDay((prev) => ({
     ...prev,
-    [day]: prev[day].filter((ex) => 
-      ex.id !== exerciseId && 
-    // @ts-ignore
-      ex.exercise?.id !== exerciseId
-    ),
+    [day]: prev[day].filter((ex) => {
+      // Get the exercise ID either directly or from the nested exercise object
+      const exId = ex.id;
+      // @ts-ignore
+      const nestedExId = ex.exercise?.id;
+      
+      // Only keep exercises that don't match the ID we want to remove
+      return exId !== exerciseId && nestedExId !== exerciseId;
+    }),
   }));
 };
 
@@ -1356,19 +1380,20 @@ const removeExerciseFromDay = (exerciseId: number, day: number) => {
                           elevation: colorScheme === "dark" ? 2 : 1.1,
                         }}
                         onPress={() => {
-                          setExercisesByDay((prevState: any) => {
-                            const existing = prevState[selectedDay] || [];
-                            return {
-                              ...prevState,
-                              [selectedDay]: [...existing, { exercise }], // correct wrapping
-                            };
-                          });
+                          addExerciseToDay(exercise);
+                          // setExercisesByDay((prevState: any) => {
+                          //   const existing = prevState[selectedDay] || [];
+                          //   return {
+                          //     ...prevState,
+                          //     [selectedDay]: [...existing, { exercise }], // correct wrapping
+                          //   };
+                          // });
 
-                          if (emptyDays?.includes(String(selectedDay))) {
-                            setEmptyDays((prevState: any) =>
-                              prevState.filter((d: any) => d != selectedDay)
-                            );
-                          }
+                          // if (emptyDays?.includes(String(selectedDay))) {
+                          //   setEmptyDays((prevState: any) =>
+                          //     prevState.filter((d: any) => d != selectedDay)
+                          //   );
+                          // }
                         }}
                       >
                         <View

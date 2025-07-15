@@ -93,7 +93,6 @@ export async function createCourseSessions(
       });
 
       if (error.response.data && error.response.data?.[0]?.non_field_errors?.[0]) {
-        console.log("123");
             Toast.show({
               type: 'error',
               text1: 'Failed to create workout for course',
