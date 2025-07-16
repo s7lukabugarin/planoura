@@ -9,18 +9,31 @@ import {
   View,
 } from "react-native";
 import { Image } from "expo-image";
+import { getThumbnailAsync } from "expo-video-thumbnails";
 
 export default function WorkoutVideo({
   autoplay = false,
   item_id,
-  thumbnail,
 }: {
   autoplay?: boolean;
   item_id?: string;
-  thumbnail?: string;
 }) {
   const [clicked, setClicked] = useState(false);
-  const mainTextColor = useThemeColor({}, "mainText");
+  const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(
+    null
+  );
+
+  useEffect(() => {
+    const getServerThumbnail = () => {
+      if (item_id) {
+        const serverThumbnail = `https://pilatesstream.s7design.de/Items/${item_id}/Images/Primary?fillHeight=396&fillWidth=223&quality=96`;
+        setGeneratedThumbnail(serverThumbnail);
+        return;
+      }
+    };
+
+    getServerThumbnail();
+  }, [item_id]);
 
   const player = useVideoPlayer(
     `${process.env.EXPO_PUBLIC_STREAM}/videos/${item_id}/main.m3u8?api_key=${process.env.EXPO_PUBLIC_STREAM_API_KEY}`,
@@ -30,7 +43,7 @@ export default function WorkoutVideo({
 
       if (autoplay) {
         player.play();
-        setClicked(true); // hide thumbnail when autoplay is enabled
+        setClicked(true);
       }
     }
   );
@@ -41,6 +54,8 @@ export default function WorkoutVideo({
     }
   }, [clicked]);
 
+  const thumbnailToUse = generatedThumbnail;
+
   return Platform.OS === "ios" ? (
     <TouchableWithoutFeedback
       onPress={() => {
@@ -48,9 +63,9 @@ export default function WorkoutVideo({
       }}
     >
       <View style={styles.contentContainer}>
-        {!clicked && thumbnail && (
+        {!clicked && thumbnailToUse && (
           <Image
-            source={{ uri: thumbnail }}
+            source={{ uri: thumbnailToUse }}
             style={[
               styles.playOverlay,
               { position: "absolute", zIndex: 2, top: 0, borderRadius: 10 },

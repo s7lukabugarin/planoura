@@ -1217,9 +1217,7 @@ export default function SingleExercise() {
                         >
                           <View style={{ height: 200, width: "100%" }}>
                             <WorkoutVideo
-                              autoplay={false}
                               item_id={video.item_id}
-                              thumbnail={featureImage}
                             />
                           </View>
                           <TouchableOpacity
@@ -1745,7 +1743,6 @@ export default function SingleExercise() {
                 >
                   <WorkoutVideo
                     item_id={video.item_id}
-                    thumbnail={featureImage}
                   />
                 </View>
               );

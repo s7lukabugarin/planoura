@@ -63,6 +63,14 @@ import { normalizeAsset } from "@/helpers/normalizeAsset";
 import { waitUntilAvailable } from "@/helpers/waitUntilAvailable";
 
 export default function ExcerciseScreen({ navigation }: any) {
+  const [selectedVisibility, setSelectedVisibility] = useState<any>([]);
+
+  const statusMap = {
+    1: "public",
+    2: "private",
+    3: "review",
+  } as const;
+
   const [editorFocused, setEditorFocused] = useState(false);
 
   const [iosPickerVisible, setIosPickerVisible] = useState(false);
@@ -462,7 +470,7 @@ export default function ExcerciseScreen({ navigation }: any) {
             },
           ]);
         }
-      } catch(err: any) {
+      } catch (err: any) {
         console.error(err);
       } finally {
         setVideoUploadLoading(false);
@@ -1348,12 +1356,31 @@ export default function ExcerciseScreen({ navigation }: any) {
     );
   };
 
+    const handleVisibilitySelection = (option: any) => {
+    const selectedValues = selectedVisibility.map((v: any) => v.value);
+
+    if (selectedValues.includes(option.value)) {
+      setSelectedVisibility((prevState: any) =>
+        prevState.filter((item: any) => item.value !== option.value)
+      );
+    } else {
+      setSelectedVisibility((prevState: any) => [...prevState, option]);
+    }
+  };
+
   const filteredExercises = exercises
     ?.filter((exercise: any) =>
       selectedTags.length
         ? exercise.exercise_tags.some((tag: any) =>
             selectedTags.map((t: any) => t.name).includes(tag.name)
           )
+        : true
+    )
+    ?.filter((exercise: any) =>
+      selectedVisibility &&
+      Array.isArray(selectedVisibility) &&
+      selectedVisibility.length
+        ? selectedVisibility.map((v: any) => v.id).includes(exercise.status)
         : true
     )
     ?.filter((exercise: any) =>
@@ -1523,7 +1550,10 @@ export default function ExcerciseScreen({ navigation }: any) {
                 </TouchableOpacity>
               )}
             </View>
-            {selectedTags && selectedTags.length > 0 && (
+            {((selectedTags && selectedTags.length > 0) ||
+              (selectedVisibility &&
+                Array.isArray(selectedVisibility) &&
+                selectedVisibility.length > 0)) && (
               <View
                 style={{
                   ...styles.filtersContainer,
@@ -1532,41 +1562,84 @@ export default function ExcerciseScreen({ navigation }: any) {
                   gap: 6,
                 }}
               >
-                {selectedTags.map((t: any) => {
-                  return (
-                    <TouchableOpacity
-                      style={{
-                        ...styles.filterTag,
-                        borderColor:
-                          colorScheme === "dark"
-                            ? "rgb(80, 80, 80)"
-                            : "rgb(221, 221, 221)",
-                      }}
-                      key={t.id}
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        setSelectedTags((prevState) =>
-                          prevState.filter((st: any) => st.id !== t.id)
-                        );
-                      }}
-                    >
-                      <ThemedText
+                {/* Tags chips */}
+                {selectedTags &&
+                  selectedTags.length > 0 &&
+                  selectedTags.map((t: any) => {
+                    return (
+                      <TouchableOpacity
                         style={{
-                          ...styles.filterText,
-                          textTransform: "capitalize",
-                          fontSize: 12,
+                          ...styles.filterTag,
+                          borderColor:
+                            colorScheme === "dark"
+                              ? "rgb(80, 80, 80)"
+                              : "rgb(221, 221, 221)",
+                        }}
+                        key={t.id}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          setSelectedTags((prevState) =>
+                            prevState.filter((st: any) => st.id !== t.id)
+                          );
                         }}
                       >
-                        {t.name}
-                      </ThemedText>
-                      <Ionicons
-                        name="close-circle"
-                        size={17}
-                        color={colorScheme === "dark" ? "#FF6B6B" : "#FA5A5A"}
-                      />
-                    </TouchableOpacity>
-                  );
-                })}
+                        <ThemedText
+                          style={{
+                            ...styles.filterText,
+                            textTransform: "capitalize",
+                            fontSize: 12,
+                          }}
+                        >
+                          {t.name}
+                        </ThemedText>
+                        <Ionicons
+                          name="close-circle"
+                          size={17}
+                          color={colorScheme === "dark" ? "#FF6B6B" : "#FA5A5A"}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
+
+                {/* Visibility chips */}
+                {selectedVisibility &&
+                  Array.isArray(selectedVisibility) &&
+                  selectedVisibility.length > 0 &&
+                  selectedVisibility.map((v: any) => {
+                    return (
+                      <TouchableOpacity
+                        style={{
+                          ...styles.filterTag,
+                          borderColor:
+                            colorScheme === "dark"
+                              ? "rgb(80, 80, 80)"
+                              : "rgb(221, 221, 221)",
+                        }}
+                        key={v.id}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          setSelectedVisibility((prevState: any) =>
+                            prevState.filter((sv: any) => sv.id !== v.id)
+                          );
+                        }}
+                      >
+                        <ThemedText
+                          style={{
+                            ...styles.filterText,
+                            textTransform: "capitalize",
+                            fontSize: 12,
+                          }}
+                        >
+                          {v.name}
+                        </ThemedText>
+                        <Ionicons
+                          name="close-circle"
+                          size={17}
+                          color={colorScheme === "dark" ? "#FF6B6B" : "#FA5A5A"}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
               </View>
             )}
             {filteredExercises?.length > 0 && (
@@ -1642,12 +1715,6 @@ export default function ExcerciseScreen({ navigation }: any) {
                 const thumbnailImage =
                   images?.find((img: any) => img.id === item.thumbnail_image)
                     ?.file_path ?? images?.[0]?.file_path;
-
-                const statusMap = {
-                  1: "public",
-                  2: "private",
-                  3: "review",
-                } as const;
 
                 type StatusKey = keyof typeof statusMap;
 
@@ -2165,7 +2232,6 @@ export default function ExcerciseScreen({ navigation }: any) {
           />
         </TouchableWithoutFeedback>
       )}
-
       <Modal
         transparent
         visible={filtersModalVisible}
@@ -2209,6 +2275,67 @@ export default function ExcerciseScreen({ navigation }: any) {
               </TouchableOpacity>
 
               <ScrollView contentContainerStyle={styles.scrollContent}>
+                {/* Visibility Filter Section */}
+                <View style={{ marginBottom: 20 }}>
+                  <ThemedText
+                    type="subtitle"
+                    style={{
+                      marginBottom: 8,
+                      fontSize: 14,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    Visibility
+                  </ThemedText>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      columnGap: 20,
+                      rowGap: 10,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {[
+                      { id: 1, name: "public", value: 1 },
+                      { id: 2, name: "private", value: 2 },
+                    ].map((visibilityOption) => {
+                      const isSelected =
+                        selectedVisibility &&
+                        selectedVisibility.length > 0 &&
+                        selectedVisibility
+                          ?.map((v: any) => v.value)
+                          ?.includes(visibilityOption.value);
+                      return (
+                        <TouchableOpacity
+                          key={visibilityOption.id}
+                          activeOpacity={0.7}
+                          style={{ flexDirection: "row", gap: 4 }}
+                          onPress={() => {
+                           handleVisibilitySelection(visibilityOption);
+                          }}
+                        >
+                          <View style={styles.checkbox}>
+                            <Ionicons
+                              name={isSelected ? "checkbox" : "square-outline"}
+                              size={24}
+                              color={isSelected ? "#12a28d" : mainTextColor}
+                            />
+                          </View>
+                          <ThemedText
+                            style={{
+                              textTransform: "capitalize",
+                              fontSize: 12,
+                            }}
+                          >
+                            {visibilityOption.name}
+                          </ThemedText>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* Exercise Tags Section */}
                 {exerciseTagsPerGroup?.map((tagGroup: any, index: number) => {
                   const selectedTagsIds = selectedTags.map(
                     (tag: any) => tag.id
@@ -2296,7 +2423,6 @@ export default function ExcerciseScreen({ navigation }: any) {
           </View>
         </View>
       </Modal>
-
       {/* <Modal
         transparent
         visible={mediaLibraryModalParams.visible}

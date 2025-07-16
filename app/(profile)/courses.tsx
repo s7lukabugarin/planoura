@@ -9,7 +9,6 @@ import {
   TouchableWithoutFeedback,
   ActivityIndicator,
   FlatList,
-  Dimensions,
 } from "react-native";
 import Modal from "react-native-modal";
 import { Image } from "expo-image";
@@ -320,7 +319,7 @@ export default function CoursesScreen({ navigation }: any) {
         setTimeout(() => {
           Toast.show({
             type: "success",
-            text1: "Course created.",
+            text1: "Class created.",
             position: "top",
           });
         }, 500);
@@ -1377,6 +1376,11 @@ export default function CoursesScreen({ navigation }: any) {
         }}
       >
         {Object.entries(exercisesByDay).map(([day, exercises]) => {
+          const totalSeconds = exercises.reduce((sum, exercise) => sum + exercise.duration_in_seconds, 0);
+
+                 const { hours, minutes, seconds } = convertSeconds(
+                              Number(totalSeconds)
+                            );
           return (
             exercises &&
             exercises?.length > 0 && (
@@ -1407,11 +1411,10 @@ export default function CoursesScreen({ navigation }: any) {
                       textAlign: "right",
                     }}
                   >
-                    Total Duration:{" "}
-                    {exercises
-                      ?.map((e) => e.duration_in_seconds)
-                      ?.reduce((acc, num) => acc + num, 0)}{" "}
-                    min
+                    Total Duration: 
+                    {hours > 0 ? ` ${hours}h` : ""}
+                    {minutes > 0 ? ` ${minutes}min` : ""}
+                    {seconds > 0 ? ` ${seconds}sec` : ""}
                   </ThemedText>
                 </View>
                 <DraggableFlatList
@@ -1450,94 +1453,6 @@ export default function CoursesScreen({ navigation }: any) {
                     });
                   }}
                 />
-                {/* {exercises.map((exercise: Exercise, index: number) => {
-                  const thumbnailImage = exercise.images?.find(
-                    (img: any) => img.id === exercise.thumbnail_image
-                  )?.file_path;
-                  return (
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      key={exercise.id}
-                      style={{
-                        ...styles.workoutWrapper,
-                        paddingRight: 40,
-                      }}
-                    >
-                      <TouchableOpacity
-                        style={styles.removeButton}
-                        onPress={() => removeExerciseFromDay(exercise.id)}
-                      >
-                        <Ionicons
-                          name="close-circle"
-                          size={20}
-                          color="#f84c4cd2"
-                        />
-                      </TouchableOpacity>
-                      <View
-                        style={{
-                          position: "absolute",
-                          top: "50%",
-                          right: -15,
-                          transform: "translate(0, -50%)",
-                          padding: 20,
-                        }}
-                      >
-                        <Ionicons
-                          name="reorder-four-outline"
-                          size={24}
-                          color="#555"
-                        />
-                      </View>
-                      <View style={styles.workoutImageWrapper}>
-                        <Image
-                          source={
-                            thumbnailImage
-                              ? { uri: thumbnailImage }
-                              : require("@/assets/images/splash-logo.png")
-                          }
-                          style={styles.workoutImage}
-                        />
-                      </View>
-                      <View style={styles.workoutInfo}>
-                        <ThemedText
-                          type="smaller"
-                          style={{
-                            color: "#000",
-                            fontFamily: "Default-Medium",
-                          }}
-                        >
-                          {exercise.name}
-                        </ThemedText>
-                        <View
-                          style={{
-                            marginTop: 6,
-                            flexDirection: "row",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Ionicons
-                            name="time-outline"
-                            size={18}
-                            color="rgba(22, 22, 22, 1)"
-                          />
-                          <ThemedText
-                            type="smaller"
-                            style={{
-                              marginLeft: 3,
-                              color: "#000",
-                              fontSize: 12,
-                              lineHeight: 15,
-                              paddingTop: 3,
-                            }}
-                          >
-                            {exercise.duration_in_seconds} min
-                          </ThemedText>
-                        </View>
-         
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })} */}
               </View>
             )
           );

@@ -236,7 +236,6 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
     shorter,
     day,
   }: any) => {
-    console.log(item);
     const thumbnailImage =
       item.exercise?.images?.find((img: any) => img.id === item.exercise?.thumbnail_image)
         ?.file_path ?? item?.images?.[0]?.file_path;
