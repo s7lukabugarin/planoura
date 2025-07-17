@@ -14,7 +14,7 @@ export default {
 
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.planoura",
+      bundleIdentifier: "com.s7design.planoura",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         NSAppTransportSecurity: {

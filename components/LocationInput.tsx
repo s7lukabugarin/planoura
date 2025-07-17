@@ -195,7 +195,7 @@ export const LocationInput = ({
             <TouchableOpacity
               onPress={() => handleSelectLocation(selectedLocation)}
             >
-              <Ionicons name="checkmark" size={28} color={"#000"} />
+              <Ionicons name="add-circle-outline" size={28} color={"#000"} />
             </TouchableOpacity>
           </View>
         </View>

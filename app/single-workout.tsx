@@ -2035,7 +2035,10 @@ export default function SingleExercise() {
               </View>
             </View>
             <TouchableOpacity
-              style={styles.successIcon}
+              style={{
+                ...styles.successIcon,
+                left: -7
+              }}
               onPress={() => {
                 if (validateForm()) {
                   editExerciseHandler();
@@ -2058,8 +2061,8 @@ export default function SingleExercise() {
                 />
               ) : (
                 <Ionicons
-                  name="checkmark-outline"
-                  size={32}
+                  name="add-circle-outline"
+                  size={24}
                   color={mainTextColor}
                 />
               )}

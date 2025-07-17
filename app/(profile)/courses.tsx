@@ -781,14 +781,20 @@ export default function CoursesScreen({ navigation }: any) {
             filteredExercisesForSelectedDay?.length > 0 ? (
             <View
               style={{
-                maxHeight: filteredExercisesForSelectedDay?.length * 180,
+                maxHeight: filteredExercisesForSelectedDay?.length * 190,
               }}
             >
               <DraggableFlatList
                 dragHitSlop={{ top: -10, left: -10 }}
                 key={`${filters.visible}-${summaryVisible}`}
                 data={filteredExercisesForSelectedDay}
-                renderItem={renderExerciseForDayItem}
+                // renderItem={renderExerciseForDayItem}
+                renderItem={(obj) => {
+                  return renderExerciseForDayItem({
+                    ...obj,
+                    shorter: false,
+                  });
+                }}
                 keyExtractor={(item) => item.id.toString()}
                 dragItemOverflow={true}
                 onDragEnd={({ data }) => {
@@ -1376,11 +1382,17 @@ export default function CoursesScreen({ navigation }: any) {
         }}
       >
         {Object.entries(exercisesByDay).map(([day, exercises]) => {
-          const totalSeconds = exercises.reduce((sum, exercise) => sum + exercise.duration_in_seconds, 0);
+          const totalSeconds =
+            exercises &&
+            exercises.length > 0 &&
+            exercises.reduce(
+              (sum, exercise) => sum + exercise.duration_in_seconds,
+              0
+            );
 
-                 const { hours, minutes, seconds } = convertSeconds(
-                              Number(totalSeconds)
-                            );
+          const { hours, minutes, seconds } = convertSeconds(
+            Number(totalSeconds)
+          );
           return (
             exercises &&
             exercises?.length > 0 && (
@@ -1411,7 +1423,7 @@ export default function CoursesScreen({ navigation }: any) {
                       textAlign: "right",
                     }}
                   >
-                    Total Duration: 
+                    Total Duration:
                     {hours > 0 ? ` ${hours}h` : ""}
                     {minutes > 0 ? ` ${minutes}min` : ""}
                     {seconds > 0 ? ` ${seconds}sec` : ""}
@@ -2132,7 +2144,7 @@ export default function CoursesScreen({ navigation }: any) {
                           {number_of_days} {number_of_days > 1 ? "days" : "day"}
                         </ThemedText>
                       </View>
-                      {userId === created_by ? (
+                      {/* {userId === created_by ? (
                         <View
                           style={{
                             ...styles.tag,
@@ -2198,7 +2210,7 @@ export default function CoursesScreen({ navigation }: any) {
                             Public
                           </ThemedText>
                         </View>
-                      )}
+                      )} */}
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -2378,7 +2390,7 @@ export default function CoursesScreen({ navigation }: any) {
                 style={{
                   ...styles.successIcon,
                   zIndex: 50,
-                  left: -10,
+                  left: -7,
                 }}
                 onPress={() => {
                   if (validateForm()) {
@@ -2390,7 +2402,7 @@ export default function CoursesScreen({ navigation }: any) {
                   <ActivityIndicator size="small" color={"#12a28d"} />
                 ) : (
                   <Ionicons
-                    name="checkmark-outline"
+                    name="add-circle-outline"
                     size={24}
                     color={mainTextColor}
                   />
@@ -2406,6 +2418,275 @@ export default function CoursesScreen({ navigation }: any) {
             </GestureHandlerRootView>
           </View>
           <Toast />
+        </Modal>
+        <Modal
+          isVisible={filters.visible}
+          onBackdropPress={() =>
+            setFilters((prevState) => ({ ...prevState, visible: false }))
+          }
+          onBackButtonPress={() =>
+            setFilters((prevState) => ({ ...prevState, visible: false }))
+          }
+          animationIn="slideInUp"
+          animationOut="slideOutDown"
+          useNativeDriver
+          hideModalContentWhileAnimating
+          backdropOpacity={0.5}
+          statusBarTranslucent
+          style={{ margin: 0 }}
+        >
+          {filters.visible && (
+            <TouchableWithoutFeedback
+              onPress={() =>
+                setFilters((prevState) => ({ ...prevState, visible: false }))
+              }
+            >
+              <View
+                style={{
+                  ...styles.modalOverlay,
+                  backgroundColor: "transparent",
+                }}
+              />
+            </TouchableWithoutFeedback>
+          )}
+
+          <View style={StyleSheet.absoluteFill}>
+            <View style={styles.modalContainer}>
+              <View
+                style={{
+                  ...styles.modalContent,
+                  backgroundColor:
+                    colorScheme === "dark" ? "#212121" : mainColor,
+                }}
+              >
+                <TouchableOpacity
+                  style={{
+                    ...styles.closeButton,
+                    marginBottom: 0,
+                  }}
+                  onPress={() =>
+                    setFilters((prevState) => ({
+                      ...prevState,
+                      visible: false,
+                    }))
+                  }
+                >
+                  <Ionicons
+                    name="close-outline"
+                    size={24}
+                    color={mainTextColor}
+                  />
+                </TouchableOpacity>
+
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                  {filters.filterName === "courses" ? (
+                    <View>
+                      {/* Difficulty Filter */}
+                      <View style={{ marginBottom: 20 }}>
+                        <ThemedText
+                          type="subtitle"
+                          style={{
+                            marginBottom: 8,
+                            fontSize: 14,
+                          }}
+                        >
+                          Difficulty
+                        </ThemedText>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            gap: 20,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {difficulties?.map((difficulty) => (
+                            <TouchableOpacity
+                              key={difficulty.name}
+                              activeOpacity={0.7}
+                              style={{ flexDirection: "row", gap: 4 }}
+                              onPress={() => {
+                                const ids = selectedDifficulties?.map(
+                                  (d) => d.id
+                                );
+
+                                if (ids?.includes(difficulty.id)) {
+                                  setSelectedDifficulties((prevState) =>
+                                    prevState.filter(
+                                      (item) => item.id !== difficulty.id
+                                    )
+                                  );
+                                } else {
+                                  setSelectedDifficulties((prevState) => [
+                                    ...prevState,
+                                    difficulty,
+                                  ]);
+                                }
+                              }}
+                            >
+                              <View style={styles.checkbox}>
+                                <Ionicons
+                                  name={
+                                    selectedDifficulties
+                                      ?.map((d) => d.id)
+                                      ?.includes(difficulty.id)
+                                      ? "checkbox"
+                                      : "square-outline"
+                                  }
+                                  size={24}
+                                  color={
+                                    selectedDifficulties
+                                      ?.map((d) => d.id)
+                                      ?.includes(difficulty.id)
+                                      ? "#12a28d"
+                                      : mainTextColor
+                                  }
+                                />
+                              </View>
+                              <ThemedText
+                                style={{
+                                  textTransform: "capitalize",
+                                  fontSize: 12,
+                                }}
+                              >
+                                {difficulty.name}
+                              </ThemedText>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Visibility Filter */}
+                      <View>
+                        <ThemedText
+                          type="subtitle"
+                          style={{
+                            marginBottom: 8,
+                            fontSize: 14,
+                          }}
+                        >
+                          Visibility
+                        </ThemedText>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            gap: 20,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {visibilityOptions?.map((option) => (
+                            <TouchableOpacity
+                              key={option.value}
+                              activeOpacity={0.7}
+                              style={{ flexDirection: "row", gap: 4 }}
+                              onPress={() => handleVisibilitySelection(option)}
+                            >
+                              <View style={styles.checkbox}>
+                                <Ionicons
+                                  name={
+                                    selectedVisibility
+                                      ?.map((v) => v.value)
+                                      ?.includes(option.value)
+                                      ? "checkbox"
+                                      : "square-outline"
+                                  }
+                                  size={24}
+                                  color={
+                                    selectedVisibility
+                                      ?.map((v) => v.value)
+                                      ?.includes(option.value)
+                                      ? "#12a28d"
+                                      : mainTextColor
+                                  }
+                                />
+                              </View>
+                              <ThemedText
+                                style={{
+                                  textTransform: "capitalize",
+                                  fontSize: 12,
+                                }}
+                              >
+                                {option.label}
+                              </ThemedText>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+                    </View>
+                  ) : (
+                    exerciseTagsPerGroup?.map(
+                      (tagGroup: any, index: number) => {
+                        const selectedTagsIds = selectedTags.map(
+                          (tag: any) => tag.id
+                        );
+
+                        return (
+                          tagGroup.exercise_tags_set?.length > 0 && (
+                            <View key={tagGroup.id}>
+                              <ThemedText
+                                type="subtitle"
+                                style={{
+                                  marginBottom: 8,
+                                  fontSize: 14,
+                                  textTransform: "capitalize",
+                                }}
+                              >
+                                {tagGroup.name}
+                              </ThemedText>
+                              <View
+                                style={{
+                                  flexDirection: "row",
+                                  columnGap: 20,
+                                  rowGap: 10,
+                                  marginBottom:
+                                    exerciseTagsPerGroup.length - 1 !== index
+                                      ? 20
+                                      : 0,
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                {tagGroup.exercise_tags_set?.map((tag: any) => (
+                                  <TouchableOpacity
+                                    key={tag.id}
+                                    activeOpacity={0.7}
+                                    style={{ flexDirection: "row", gap: 4 }}
+                                    onPress={() => handleTagSelection(tag)}
+                                  >
+                                    <View style={styles.checkbox}>
+                                      <Ionicons
+                                        name={
+                                          selectedTagsIds.includes(tag.id)
+                                            ? "checkbox"
+                                            : "square-outline"
+                                        }
+                                        size={24}
+                                        color={
+                                          selectedTagsIds.includes(tag.id)
+                                            ? "#12a28d"
+                                            : "#888"
+                                        }
+                                      />
+                                    </View>
+                                    <ThemedText
+                                      style={{
+                                        textTransform: "capitalize",
+                                        fontSize: 12,
+                                      }}
+                                    >
+                                      {tag.name}
+                                    </ThemedText>
+                                  </TouchableOpacity>
+                                ))}
+                              </View>
+                            </View>
+                          )
+                        );
+                      }
+                    )
+                  )}
+                </ScrollView>
+              </View>
+            </View>
+          </View>
         </Modal>
       </Modal>
       {filters.visible && (
@@ -2426,272 +2707,6 @@ export default function CoursesScreen({ navigation }: any) {
         </TouchableWithoutFeedback>
       )}
 
-      <Modal
-        isVisible={filters.visible}
-        onBackdropPress={() =>
-          setFilters((prevState) => ({ ...prevState, visible: false }))
-        }
-        onBackButtonPress={() =>
-          setFilters((prevState) => ({ ...prevState, visible: false }))
-        }
-        animationIn="slideInUp"
-        animationOut="slideOutDown"
-        useNativeDriver
-        hideModalContentWhileAnimating
-        backdropOpacity={0.5}
-        statusBarTranslucent
-        style={{ margin: 0 }}
-      >
-        {filters.visible && (
-          <TouchableWithoutFeedback
-            onPress={() =>
-              setFilters((prevState) => ({ ...prevState, visible: false }))
-            }
-          >
-            <View
-              style={{
-                ...styles.modalOverlay,
-                backgroundColor: "transparent",
-              }}
-            />
-          </TouchableWithoutFeedback>
-        )}
-
-        <View style={StyleSheet.absoluteFill}>
-          <View style={styles.modalContainer}>
-            <View
-              style={{
-                ...styles.modalContent,
-                backgroundColor: colorScheme === "dark" ? "#212121" : mainColor,
-              }}
-            >
-              <TouchableOpacity
-                style={{
-                  ...styles.closeButton,
-                  marginBottom: 0,
-                }}
-                onPress={() =>
-                  setFilters((prevState) => ({
-                    ...prevState,
-                    visible: false,
-                  }))
-                }
-              >
-                <Ionicons
-                  name="close-outline"
-                  size={24}
-                  color={mainTextColor}
-                />
-              </TouchableOpacity>
-
-              <ScrollView contentContainerStyle={styles.scrollContent}>
-                {filters.filterName === "courses" ? (
-                  <View>
-                    {/* Difficulty Filter */}
-                    <View style={{ marginBottom: 20 }}>
-                      <ThemedText
-                        type="subtitle"
-                        style={{
-                          marginBottom: 8,
-                          fontSize: 14,
-                        }}
-                      >
-                        Difficulty
-                      </ThemedText>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          gap: 20,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        {difficulties?.map((difficulty) => (
-                          <TouchableOpacity
-                            key={difficulty.name}
-                            activeOpacity={0.7}
-                            style={{ flexDirection: "row", gap: 4 }}
-                            onPress={() => {
-                              const ids = selectedDifficulties?.map(
-                                (d) => d.id
-                              );
-
-                              if (ids?.includes(difficulty.id)) {
-                                setSelectedDifficulties((prevState) =>
-                                  prevState.filter(
-                                    (item) => item.id !== difficulty.id
-                                  )
-                                );
-                              } else {
-                                setSelectedDifficulties((prevState) => [
-                                  ...prevState,
-                                  difficulty,
-                                ]);
-                              }
-                            }}
-                          >
-                            <View style={styles.checkbox}>
-                              <Ionicons
-                                name={
-                                  selectedDifficulties
-                                    ?.map((d) => d.id)
-                                    ?.includes(difficulty.id)
-                                    ? "checkbox"
-                                    : "square-outline"
-                                }
-                                size={24}
-                                color={
-                                  selectedDifficulties
-                                    ?.map((d) => d.id)
-                                    ?.includes(difficulty.id)
-                                    ? "#12a28d"
-                                    : mainTextColor
-                                }
-                              />
-                            </View>
-                            <ThemedText
-                              style={{
-                                textTransform: "capitalize",
-                                fontSize: 12,
-                              }}
-                            >
-                              {difficulty.name}
-                            </ThemedText>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    </View>
-
-                    {/* Visibility Filter */}
-                    <View>
-                      <ThemedText
-                        type="subtitle"
-                        style={{
-                          marginBottom: 8,
-                          fontSize: 14,
-                        }}
-                      >
-                        Visibility
-                      </ThemedText>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          gap: 20,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        {visibilityOptions?.map((option) => (
-                          <TouchableOpacity
-                            key={option.value}
-                            activeOpacity={0.7}
-                            style={{ flexDirection: "row", gap: 4 }}
-                            onPress={() => handleVisibilitySelection(option)}
-                          >
-                            <View style={styles.checkbox}>
-                              <Ionicons
-                                name={
-                                  selectedVisibility
-                                    ?.map((v) => v.value)
-                                    ?.includes(option.value)
-                                    ? "checkbox"
-                                    : "square-outline"
-                                }
-                                size={24}
-                                color={
-                                  selectedVisibility
-                                    ?.map((v) => v.value)
-                                    ?.includes(option.value)
-                                    ? "#12a28d"
-                                    : mainTextColor
-                                }
-                              />
-                            </View>
-                            <ThemedText
-                              style={{
-                                textTransform: "capitalize",
-                                fontSize: 12,
-                              }}
-                            >
-                              {option.label}
-                            </ThemedText>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    </View>
-                  </View>
-                ) : (
-                  exerciseTagsPerGroup?.map((tagGroup: any, index: number) => {
-                    const selectedTagsIds = selectedTags.map(
-                      (tag: any) => tag.id
-                    );
-
-                    return (
-                      tagGroup.exercise_tags_set?.length > 0 && (
-                        <View key={tagGroup.id}>
-                          <ThemedText
-                            type="subtitle"
-                            style={{
-                              marginBottom: 8,
-                              fontSize: 14,
-                              textTransform: "capitalize",
-                            }}
-                          >
-                            {tagGroup.name}
-                          </ThemedText>
-                          <View
-                            style={{
-                              flexDirection: "row",
-                              columnGap: 20,
-                              rowGap: 10,
-                              marginBottom:
-                                exerciseTagsPerGroup.length - 1 !== index
-                                  ? 20
-                                  : 0,
-                              flexWrap: "wrap",
-                            }}
-                          >
-                            {tagGroup.exercise_tags_set?.map((tag: any) => (
-                              <TouchableOpacity
-                                key={tag.id}
-                                activeOpacity={0.7}
-                                style={{ flexDirection: "row", gap: 4 }}
-                                onPress={() => handleTagSelection(tag)}
-                              >
-                                <View style={styles.checkbox}>
-                                  <Ionicons
-                                    name={
-                                      selectedTagsIds.includes(tag.id)
-                                        ? "checkbox"
-                                        : "square-outline"
-                                    }
-                                    size={24}
-                                    color={
-                                      selectedTagsIds.includes(tag.id)
-                                        ? "#12a28d"
-                                        : "#888"
-                                    }
-                                  />
-                                </View>
-                                <ThemedText
-                                  style={{
-                                    textTransform: "capitalize",
-                                    fontSize: 12,
-                                  }}
-                                >
-                                  {tag.name}
-                                </ThemedText>
-                              </TouchableOpacity>
-                            ))}
-                          </View>
-                        </View>
-                      )
-                    );
-                  })
-                )}
-              </ScrollView>
-            </View>
-          </View>
-        </View>
-      </Modal>
       {/* <Modal
         visible={summaryVisible}
         animationType="slide"

@@ -2433,7 +2433,7 @@ export default function SingleCourse() {
               ) : (
                 <Ionicons
                   name="arrow-forward-outline"
-                  size={32}
+                  size={24}
                   color={mainTextColor}
                 />
               )}
@@ -2650,7 +2650,11 @@ export default function SingleCourse() {
                 </View>
               </View>
               <TouchableOpacity
-                style={styles.successIcon}
+                style={{
+                  ...styles.successIcon,
+                   zIndex: 50,
+                  left: -7,
+                }}
                 onPress={() => {
                   if (validateForm()) {
                     editCourseHandler();
@@ -2661,8 +2665,8 @@ export default function SingleCourse() {
                   <ActivityIndicator size="small" color={"#12a28d"} />
                 ) : (
                   <Ionicons
-                    name="checkmark-outline"
-                    size={32}
+                    name="add-circle-outline"
+                    size={24}
                     color={mainTextColor}
                   />
                 )}

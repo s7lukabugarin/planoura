@@ -1254,7 +1254,7 @@ const WorkoutEditModal: React.FC<WorkoutEditModalProps> = ({
                   //  handleSubmit();
                 }}
               >
-                <Ionicons name="checkmark" size={24} color={mainTextColor} />
+                <Ionicons name="add-circle-outline" size={24} color={mainTextColor} />
               </TouchableOpacity>
             )}
           </View>

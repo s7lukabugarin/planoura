@@ -126,7 +126,7 @@ const UntilModal: React.FC<UntilModalProps> = ({
               }
             }}
           >
-            <Ionicons name="checkmark" size={24} color={mainTextColor} />
+            <Ionicons name="add-circle-outline" size={24} color={mainTextColor} />
           </TouchableOpacity>
         </View>
         <TouchableOpacity

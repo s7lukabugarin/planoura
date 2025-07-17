@@ -113,7 +113,7 @@ const TimePatternModal: React.FC<TimePatternModalProps> = ({
               onSubmit(selectedPattern, interval, untilDate);
             }}
           >
-            <Ionicons name="checkmark" size={24} color={mainTextColor} />
+            <Ionicons name="add-circle-outline" size={24} color={mainTextColor} />
           </TouchableOpacity>
         </View>
         <Dropdown

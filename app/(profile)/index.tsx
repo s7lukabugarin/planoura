@@ -67,7 +67,6 @@ export default function ClientsScreen() {
     try {
       const uploaded = await uploadProfileImage(
         normalized,
-        setImageUploadLoading
       );
 
       if (!uploaded || !uploaded.file_path) throw new Error("Upload failed");
@@ -613,8 +612,8 @@ export default function ClientsScreen() {
                 />
               ) : (
                 <Ionicons
-                  name="checkmark-outline"
-                  size={32}
+                  name="add-circle-outline"
+                  size={24}
                   color={mainTextColor}
                 />
               )}

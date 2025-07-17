@@ -15,6 +15,7 @@ import { View, Platform, Text } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import * as SystemUI from "expo-system-ui";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import * as Notifications from 'expo-notifications';
 
 SplashScreen.preventAutoHideAsync();
 // SplashScreen.setOptions({
@@ -51,6 +52,19 @@ export default function RootLayout() {
         : NavigationBar.setButtonStyleAsync("dark");
     }
   }, [colorScheme]);
+
+    useEffect(() => {
+    const requestNotificationPermissions = async () => {
+      const { status } = await Notifications.getPermissionsAsync();
+      
+      if (status !== 'granted') {
+        const { status: newStatus } = await Notifications.requestPermissionsAsync();
+        console.log('Notification permission status:', newStatus);
+      }
+    };
+
+    requestNotificationPermissions();
+  }, []);
 
   if (!fontsLoaded) {
     return null;

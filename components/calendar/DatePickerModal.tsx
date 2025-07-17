@@ -41,7 +41,7 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({
               : "Select Date"}
           </Text>
           <TouchableOpacity onPress={() => {}}>
-            <Ionicons name="checkmark" size={24} color="#000" />
+            <Ionicons name="add-circle-outline" size={24} color="#000" />
           </TouchableOpacity>
         </View>
         <DateTimePicker mode="time" display="default" value={new Date()} />

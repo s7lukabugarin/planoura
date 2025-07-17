@@ -798,7 +798,7 @@ const submitCourse = async () => {
                       // lineHeight: 16,
                     }}
                   >
-                    Is Class
+                    Use already created class
                   </ThemedText>
                 </TouchableOpacity>
               </View>
@@ -3020,7 +3020,7 @@ const submitCourse = async () => {
                 {courseSessionsCreateLoading ? (
                   <ActivityIndicator size="small" color={"#12a28d"} />
                 ) : (
-                  <Ionicons name="checkmark" size={24} color={mainTextColor} />
+                  <Ionicons name="add-circle-outline" size={24} color={mainTextColor} />
                 )}
               </TouchableOpacity>
             ) : (
@@ -3135,7 +3135,7 @@ const submitCourse = async () => {
                           <ActivityIndicator size="small" color={"#12a28d"} />
                         ) : (
                           <Ionicons
-                            name="checkmark-outline"
+                            name="add-circle-outline"
                             size={24}
                             color={mainTextColor}
                           />

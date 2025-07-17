@@ -109,7 +109,7 @@ const pickImage = async () => {
   setImageUploadLoading(true);
 
   try {
-    const uploaded = await uploadProfileImage(normalized, setImageUploadLoading);
+    const uploaded = await uploadProfileImage(normalized);
 
     if (!uploaded || !uploaded.file_path) throw new Error("Upload failed");
 
@@ -644,8 +644,8 @@ const pickImage = async () => {
                 />
               ) : (
                 <Ionicons
-                  name="checkmark-outline"
-                  size={32}
+                  name="add-circle-outline"
+                  size={24}
                   color={mainTextColor}
                 />
               )}
